@@ -1,6 +1,7 @@
 import socket
 import json
 import os
+import logging
 from messages.report_metric_message import ReportMetricMessage
 
 class Client():
@@ -56,12 +57,12 @@ class Reporter(Client):
         metric_response = self.__recv_message()
         if (metric_response['status'] == "200"):
             # TODO log success
-            print(metric_response)
+            logging.info(metric_response)
 
 
         elif (metric_response['status'] != "200"):
             # TODO log error
-            print(metric_response)
+            logging.info(metric_response)
 
 
     def run(self, metric_id, value):
@@ -69,15 +70,16 @@ class Reporter(Client):
 
         self.__send_message(self.mode)
         mode_response = self.__recv_message()
+        logging.info(mode_response)
 
         if (mode_response['status'] == 200):
             self.__send_report(metric_id, value)
 
         else:
             # TODO log error
-            print(mode_response)
+            logging.info(mode_response)
 
         
         # TODO log close
-        print("Close socket")
+        logging.info("Close socket")
         self.socket.close()

@@ -1,25 +1,73 @@
-import argparse
-import socket
+import os
+import logging
+from configparser import ConfigParser
 from client import Reporter
 
-parser = argparse.ArgumentParser()
 
-parser.add_argument('-p', '--port', help="server port", type=int, required=True)
-parser.add_argument('-H', '--host', help="host server IP address", default=socket.gethostname())
-parser.add_argument('-m', '--mode', help="report / agg / consumer", default = 'consumer')
-parser.add_argument('-i', '--id', help="metric Id")
-parser.add_argument('-v', '--value', help="Metric Value")
+def initialize_log(logging_level):
+    """
+    Python custom logging initialization
 
-args = parser.parse_args()
+    Current timestamp is added to be able to identify in docker
+    compose logs the date when the log has arrived
+    """
+    logging.basicConfig(
+        format='%(asctime)s %(levelname)-8s %(message)s',
+        level=logging_level,
+        datefmt='%Y-%m-%d %H:%M:%S',
+    )
 
 
-if args.port is not None and args.host is not None:
-	if args.mode == "report" and args.id is not None and args.value is not None:
-		client = Reporter(args.host, args.port)
-		client.run(args.id, args.value)
-	else:
-		print("Invalid mode")
+def initialize_config():
+    """ Parse env variables or config file to find program config params
 
-else:
-	print("Parameters missing")
-	exit()
+    Function that search and parse program configuration parameters in the
+    program environment variables first and the in a config file. 
+    If at least one of the config parameters is not found a KeyError exception 
+    is thrown. If a parameter could not be parsed, a ValueError is thrown. 
+    If parsing succeeded, the function returns a ConfigParser object 
+    with config parameters
+    """
+
+    config = ConfigParser(os.environ)
+    # If config.ini does not exists original config object is not modified
+    config.read("client/config.ini")
+
+    config_params = {}
+    try:
+        config_params["port"] = int(config["DEFAULT"]["client_port"])
+        config_params["host"] = config["DEFAULT"]["client_host"]
+        config_params["logging_level"] = config["DEFAULT"]["logging_level"]
+        config_params["mode"] = config["DEFAULT"]["client_mode"]
+        config_params["id"] = int(config["DEFAULT"]["metric_id"])
+        config_params["value"] = int(config["DEFAULT"]["metric_value"])
+
+        # TODO ADD MORE PARAMETERS
+    except KeyError as e:
+        raise KeyError("Key was not found. Error: {} .Aborting server".format(e))
+    except ValueError as e:
+        raise ValueError("Key could not be parsed. Error: {}. Aborting server".format(e))
+
+    return config_params
+
+
+def main():
+    config_params = initialize_config()
+    initialize_log(config_params["logging_level"])
+
+    # Log config parameters at the beginning of the program to verify the configuration
+    # of the component
+    logging.debug("Server configuration: {}".format(config_params))
+
+    # Initialize server and start server loop
+    if config_params["mode"] == "report":
+        client = Reporter(config_params["host"], config_params["port"])
+        client.run(config_params["id"], config_params["value"])
+
+    else:
+        logging.error("Invalid mode")
+
+
+
+if __name__ == "__main__":
+    main()
