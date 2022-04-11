@@ -16,7 +16,7 @@ class ServerError(Response):
 	MSG = "ERROR - Servidor no disponible. Intente más tarde"
 
 	def __init__(self):
-		super().__init__(STATUS, MSG)
+		super().__init__(self.STATUS, self.MSG)
 
 
 class ValidMode(Response):
@@ -25,7 +25,7 @@ class ValidMode(Response):
 	MSG = "OK - Modo valido"
 
 	def __init__(self):
-		super().__init__(STATUS, MSG)
+		super().__init__(self.STATUS, self.MSG)
 
 
 class InvalidMode(Response):
@@ -34,7 +34,7 @@ class InvalidMode(Response):
 	MSG = "ERROR - Modo invalido"
 
 	def __init__(self):
-		super().__init__(STATUS, MSG)
+		super().__init__(self.STATUS, self.MSG)
 
 
 class SuccessAggregation(Response):
@@ -43,7 +43,7 @@ class SuccessAggregation(Response):
 	MSG = "OK - Query procesada correctamente."
 
 	def __init__(self, agg_array):
-		super().__init__(STATUS, MSG)
+		super().__init__(self.STATUS, self.MSG)
 		self.agg = agg_array
 
 
@@ -53,7 +53,7 @@ class MetricIdNotFound(Response):
 	MSG = "ERROR - MetricId recibido no existe"
 
 	def __init__(self):
-		super().__init__(STATUS, MSG)
+		super().__init__(self.STATUS, self.MSG)
 
 
 class BadRequest(Response):
@@ -62,7 +62,7 @@ class BadRequest(Response):
 	MSG = "ERROR - Formato de Query incorrecto"
 
 	def __init__(self):
-		super().__init__(STATUS, MSG)
+		super().__init__(self.STATUS, self.MSG)
 
 class SuccessRecv(Response):
 
@@ -70,7 +70,7 @@ class SuccessRecv(Response):
 	MSG = "OK - Metrica recibida correctamente"
 
 	def __init__(self):
-		super().__init__(STATUS, MSG)
+		super().__init__(self.STATUS, self.MSG)
 
 
 class BadRequest(Response):
@@ -79,4 +79,4 @@ class BadRequest(Response):
 	MSG = "ERROR - Formato de metrica incorrecto"
 
 	def __init__(self):
-		super().__init__(STATUS, MSG)
+		super().__init__(self.STATUS, self.MSG)

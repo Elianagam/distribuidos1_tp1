@@ -3,6 +3,7 @@ from threading import Thread, Timer
 import traceback
 import os
 import json
+from server_worker import ServerWorker
 
 
 class Server(Thread):
@@ -25,7 +26,7 @@ class Server(Thread):
             conn, (client_host, client_port) = self.socket.accept()
             
             print(f'Incoming Connection from {client_host} {client_port}')
-            new_client = ServerWorker(client_port, client_host, conn, self.storage)
+            new_client = ServerWorker(client_port, client_host, conn)
             new_client.start()
             self.clients.append(new_client)
 

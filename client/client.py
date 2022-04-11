@@ -11,18 +11,16 @@ class Client():
         self.buffer_size = 1024
 
     def __connect(self):
+        print("Success connection")
         self.socket.connect((self.host, self.port))
 
     def __send_message(self, message):
         self.socket.send(message.encode())
 
-    def recv_message(self):
+    def __recv_message(self):
         rcv_packet = self.socket.recv(self.buffer_size)
         response = json.loads(rcv_packet.decode())
         return response
-
-    def run(self):
-        pass
 
 
 class ConsumerAggregation(Client):
@@ -35,10 +33,22 @@ class ConsumerAggregation(Client):
         pass
 
 
-class Reporter(Client)
+class Reporter(Client):
     def __init__(self, host, port):
+        self.mode = "report"
         super().__init__(host, port)
-        self.mode = "REPORT"
+
+    def __connect(self):
+        print("Success connection")
+        self.socket.connect((self.host, self.port))
+
+    def __send_message(self, message):
+        self.socket.send(message.encode())
+
+    def __recv_message(self):
+        recv = self.socket.recv(self.buffer_size)
+        response = json.loads(recv.decode())
+        return response
     
     def __send_report(self, metric_id, value):
         # Create metric and send
@@ -48,15 +58,19 @@ class Reporter(Client)
         metric_response = self.__recv_message()
         if (metric_response['status'] == "200"):
             # TODO log success
-            print(json.dump(metric_response))
+            print(metric_response)
+            
 
         elif (metric_response['status'] != "200"):
             # TODO log error
-            print(json.dump(metric_response))
+            print(metric_response)
 
 
     def run(self, metric_id, value):
-        super().__connect()
+        self.__connect()
+        # TODO: eliminar print
+        print(self.mode)
+
         self.__send_message(self.mode)
         mode_response = self.__recv_message()
 
@@ -65,7 +79,7 @@ class Reporter(Client)
 
         else:
             # TODO log error
-            print(json.dump(mode_response))
+            print(mode_response)
 
         
         # TODO log close
