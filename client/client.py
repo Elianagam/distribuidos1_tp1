@@ -4,20 +4,20 @@ import os
 from messages.report_metric_message import ReportMetricMessage
 
 class Client():
-    def __init__(self, host, port=6000):
+    def __init__(self, host, port, mode):
         self.host = host
         self.port = port
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.buffer_size = 1024
+        self.mode = mode
 
-    def __connect(self):
-        print("Success connection")
+    def connect(self):
         self.socket.connect((self.host, self.port))
 
-    def __send_message(self, message):
+    def send_message(self, message):
         self.socket.send(message.encode())
 
-    def __recv_message(self):
+    def recv_message(self):
         rcv_packet = self.socket.recv(self.buffer_size)
         response = json.loads(rcv_packet.decode())
         return response
@@ -35,20 +35,18 @@ class ConsumerAggregation(Client):
 
 class Reporter(Client):
     def __init__(self, host, port):
-        self.mode = "report"
-        super().__init__(host, port)
+        super().__init__(host, port, "report")
 
     def __connect(self):
-        print("Success connection")
-        self.socket.connect((self.host, self.port))
+        #self.socket.connect((self.host, self.port))
+        super().connect()
+
 
     def __send_message(self, message):
-        self.socket.send(message.encode())
+        super().send_message(message)
 
     def __recv_message(self):
-        recv = self.socket.recv(self.buffer_size)
-        response = json.loads(recv.decode())
-        return response
+        return super().recv_message()
     
     def __send_report(self, metric_id, value):
         # Create metric and send
@@ -59,7 +57,7 @@ class Reporter(Client):
         if (metric_response['status'] == "200"):
             # TODO log success
             print(metric_response)
-            
+
 
         elif (metric_response['status'] != "200"):
             # TODO log error
@@ -68,8 +66,6 @@ class Reporter(Client):
 
     def run(self, metric_id, value):
         self.__connect()
-        # TODO: eliminar print
-        print(self.mode)
 
         self.__send_message(self.mode)
         mode_response = self.__recv_message()

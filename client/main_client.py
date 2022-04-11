@@ -13,11 +13,13 @@ parser.add_argument('-v', '--value', help="Metric Value")
 args = parser.parse_args()
 
 
-if args.port is not None and args.host is not None \
-	and args.mode == "report" \
-	and args.id is not None and args.value is not None:
-    	client = Reporter(args.host, args.port)
-    	client.run(args.id, args.value)
+if args.port is not None and args.host is not None:
+	if args.mode == "report" and args.id is not None and args.value is not None:
+		client = Reporter(args.host, args.port)
+		client.run(args.id, args.value)
+	else:
+		print("Invalid mode")
+
 else:
-    print("Paramters missing")
-    exit()
+	print("Parameters missing")
+	exit()
