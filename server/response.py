@@ -46,6 +46,10 @@ class SuccessAggregation(Response):
 		super().__init__(self.STATUS, self.MSG)
 		self.agg = agg_array
 
+	def serialize(self):
+		dict_response = {"status": self.STATUS, "msg": self.MSG, "agg": self.agg}
+		return json.dumps(dict_response)
+
 
 class MetricIdNotFound(Response):
 
@@ -77,6 +81,15 @@ class BadRequest(Response):
 
 	STATUS = 400
 	MSG = "ERROR - Formato de metrica incorrecto"
+
+	def __init__(self):
+		super().__init__(self.STATUS, self.MSG)
+
+
+class CloseListener(Response):
+
+	STATUS = 200
+	MSG = "close"
 
 	def __init__(self):
 		super().__init__(self.STATUS, self.MSG)

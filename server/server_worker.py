@@ -10,7 +10,7 @@ class ServerWorker(Thread):
         #self.port = port
         #self.host = host
         self._socket = socket
-        self._file_writer = file_writer
+        self._metrics_file = file_writer
 
     def __close_conection(self):
         #self._socket.shutdown(socket.SHUT_RDWR)
@@ -36,24 +36,35 @@ class ServerWorker(Thread):
         return mode
 
     def __save_metric(self, metric):
-        self._file_writer.write(metric)
+        self._metrics_file.write(metric)
 
     def __recv_metric(self):
-        self.__send_response(ValidMode())
-        
         metric = self.__recv_request()
+        logging.info(f"Recv Metric - {metric}")
 
         # TODO: Check in metricId is in file
         self.__send_response(SuccessRecv())
-        logging.info(f"Recv Metric - {metric}")
+        return metric
 
-        self.__save_metric(metric)
+    def __send_metrics(self):
+        rows = self._metrics_file.read()
+        self.__send_response(SuccessAggregation(rows))
+
+        self.__send_response(CloseListener())
+        print("-- send close msg")
+
 
     def run(self):
         mode = self.__recv_mode()
 
         if mode == "report":
-            self.__recv_metric()
+            self.__send_response(ValidMode())
+            metric = self.__recv_metric()
+            self.__save_metric(metric)
+
+        if mode == "listen":
+            self.__send_response(ValidMode())
+            self.__send_metrics()
         
         else:
             logging.error(f"Invalid mode: {mode}")

@@ -2,6 +2,7 @@ import os
 import logging
 from configparser import ConfigParser
 from reporter import Reporter
+from listener import Listener
 
 
 def initialize_log(logging_level):
@@ -57,12 +58,15 @@ def main():
 
     # Log config parameters at the beginning of the program to verify the configuration
     # of the component
-    logging.debug("Server configuration: {}".format(config_params))
+    logging.debug("Client configuration: {}".format(config_params))
 
     # Initialize server and start server loop
     if config_params["mode"] == "report":
         client = Reporter(config_params["host"], config_params["port"])
         client.run(config_params["id"], config_params["value"])
+    if config_params["mode"] == "listen":
+        client = Listener(config_params["host"], config_params["port"])
+        client.run()
 
     else:
         logging.error("Invalid mode")
