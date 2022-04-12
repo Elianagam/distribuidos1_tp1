@@ -38,8 +38,8 @@ def initialize_config():
         config_params["port"] = int(config["DEFAULT"]['server_port'])
         config_params["listen_backlog"] = int(config["DEFAULT"]["server_listen_backlog"])
         config_params["logging_level"] = config["DEFAULT"]["logging_level"]
+        config_params["filename"] = config["DEFAULT"]["metric_filename"]
 
-        # TODO ADD MORE PARAMETERS
     except KeyError as e:
         raise KeyError("Key was not found. Error: {} .Aborting server".format(e))
     except ValueError as e:
@@ -57,7 +57,7 @@ def main():
     logging.debug("Server configuration: {}".format(config_params))
 
     # Initialize server and start server loop
-    server = Server(config_params["port"], config_params["listen_backlog"])
+    server = Server(config_params["port"], config_params["listen_backlog"], config_params["filename"])
     server.run()
 
 

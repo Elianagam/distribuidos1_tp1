@@ -5,16 +5,19 @@ import os
 import json
 import logging
 from server_worker import ServerWorker
+from safe_file_writer import SafeFileWriter
 
 
 class Server(Thread):
-    def __init__(self, port, listen_backlog):
+    def __init__(self, port, listen_backlog, filename):
         Thread.__init__(self)
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.socket.bind(('', port))
-        self.socket.listen(listen_backlog)
-        self.clients = []
+        self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self._socket.bind(('', port))
+        self._socket.listen(listen_backlog)
+        
+        self._clients = []
+        self._file_writer = SafeFileWriter(filename)
 
     def __accept_new_connection(self):
         """
@@ -25,7 +28,7 @@ class Server(Thread):
 
         # Connection arrived
         logging.info("Proceed to accept new connections")
-        c, (client_port, client_host) = self.socket.accept()
+        c, (client_port, client_host) = self._socket.accept()
         logging.info('Got connection from ({}, {})'.format(client_host, client_port))
         return c, client_port, client_host
 
@@ -34,11 +37,11 @@ class Server(Thread):
         while True:
             conn, client_port, client_host = self.__accept_new_connection()
             
-            new_client = ServerWorker(client_port, client_host, conn)
+            new_client = ServerWorker(client_port, client_host, conn, self._file_writer)
             new_client.start()
-            self.clients.append(new_client)
+            self._clients.append(new_client)
 
         print("Cerrando conexiones")
-        for client in self.clients:
+        for client in self._clients:
             client.join()
 
