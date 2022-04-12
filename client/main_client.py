@@ -1,7 +1,7 @@
 import os
 import logging
 from configparser import ConfigParser
-from client import Reporter
+from reporter import Reporter
 
 
 def initialize_log(logging_level):
