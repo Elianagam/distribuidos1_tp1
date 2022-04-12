@@ -9,9 +9,6 @@ class Reporter(Client):
     def __init__(self, host, port):
         super().__init__(host, port, "report")
 
-    def __connect(self):
-        super().connect()
-
     def __send_message(self, message):
         super().send_message(message)
 
@@ -31,8 +28,6 @@ class Reporter(Client):
 
 
     def run(self, metric_id, value):
-        self.__connect()
-
         self.__send_message(self.mode)
         mode_response = self.__recv_message()
         logging.info(mode_response)

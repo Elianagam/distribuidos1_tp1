@@ -11,7 +11,6 @@ class Client():
         self.socket.connect((host, port))
         self.mode = mode
 
-
     def send_message(self, message):
         self.socket.send(message.encode())
 
