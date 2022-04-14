@@ -1,25 +1,16 @@
-import socket
 import json
-import os
 import logging
-from messages.report_metric_message import ReportMetricMessage
 from client import Client
+from datetime import datetime
 
 class Reporter(Client):
     def __init__(self, host, port):
         super().__init__(host, port, "report")
-
-    def __send_message(self, message):
-        super().send_message(message)
-
-    def __recv_message(self):
-        return super().recv_message()
     
     def __send_report(self, metric_id, value):
-        metric_msg = ReportMetricMessage(metric_id, value).serialize()
-        self.__send_message(metric_msg)
+        self._socket.send_message(ReportMetricMessage(metric_id, value).serialize())
 
-        metric_response = self.__recv_message()
+        metric_response = self._socket.recv_message()
         if (metric_response['status'] == "200"):
             logging.info(metric_response)
 
@@ -28,8 +19,8 @@ class Reporter(Client):
 
 
     def run(self, metric_id, value):
-        self.__send_message(self.mode)
-        mode_response = self.__recv_message()
+        self._socket.send_message(json.dumps({"mode": self._mode}))
+        mode_response = self._socket.recv_message()
         logging.info(mode_response)
 
         if (mode_response['status'] == 200):
@@ -38,5 +29,14 @@ class Reporter(Client):
         else:
             logging.info(mode_response)
         
-        logging.info("Close socket")
-        self.socket.close()
+        self._socket.close_conection()
+
+
+class ReportMetricMessage:
+    def __init__(self, metric_id, value):
+        self.metric_id = metric_id
+        self.value = value
+        self.datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    def serialize(self):
+        return json.dumps(self.__dict__)

@@ -5,13 +5,13 @@ class Response:
 		self.status = status
 		self.msg = msg
 
+	# TODO: Replace for fctory
 
 	def serialize(self):
 		return json.dumps(self.__dict__)
 
 
 class ServerError(Response):
-
 	STATUS = 500
 	MSG = "ERROR - Servidor no disponible. Intente más tarde"
 
@@ -20,7 +20,6 @@ class ServerError(Response):
 
 
 class ValidMode(Response):
-
 	STATUS = 200
 	MSG = "OK - Modo valido"
 
@@ -29,7 +28,6 @@ class ValidMode(Response):
 
 
 class InvalidMode(Response):
-
 	STATUS = 404
 	MSG = "ERROR - Modo invalido"
 
@@ -38,7 +36,6 @@ class InvalidMode(Response):
 
 
 class SuccessAggregation(Response):
-
 	STATUS = 200
 	MSG = "OK - Query procesada correctamente."
 
@@ -52,7 +49,6 @@ class SuccessAggregation(Response):
 
 
 class MetricIdNotFound(Response):
-
 	STATUS = 404
 	MSG = "ERROR - MetricId recibido no existe"
 
@@ -61,7 +57,6 @@ class MetricIdNotFound(Response):
 
 
 class BadRequest(Response):
-
 	STATUS = 400
 	MSG = "ERROR - Formato de Query incorrecto"
 
@@ -69,7 +64,6 @@ class BadRequest(Response):
 		super().__init__(self.STATUS, self.MSG)
 
 class SuccessRecv(Response):
-
 	STATUS = 200
 	MSG = "OK - Metrica recibida correctamente"
 
@@ -78,7 +72,6 @@ class SuccessRecv(Response):
 
 
 class BadRequest(Response):
-
 	STATUS = 400
 	MSG = "ERROR - Formato de metrica incorrecto"
 
@@ -86,8 +79,7 @@ class BadRequest(Response):
 		super().__init__(self.STATUS, self.MSG)
 
 
-class CloseListener(Response):
-
+class CloseMessage(Response):
 	STATUS = 200
 	MSG = "close"
 

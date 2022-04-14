@@ -2,7 +2,7 @@ import os
 import logging
 from configparser import ConfigParser
 from reporter import Reporter
-from listener import Listener
+from aggregation_query import AggregationQuery
 
 
 def initialize_log(logging_level):
@@ -64,8 +64,9 @@ def main():
     if config_params["mode"] == "report":
         client = Reporter(config_params["host"], config_params["port"])
         client.run(config_params["id"], config_params["value"])
-    if config_params["mode"] == "listen":
-        client = Listener(config_params["host"], config_params["port"])
+    
+    elif config_params["mode"] == "agg":
+        client = AggregationQuery(config_params["host"], config_params["port"])
         client.run()
 
     else:
