@@ -56,7 +56,7 @@ class MetricIdNotFound(Response):
 		super().__init__(self.STATUS, self.MSG)
 
 
-class BadRequest(Response):
+class QueryBadRequest(Response):
 	STATUS = 400
 	MSG = "ERROR - Formato de Query incorrecto"
 
@@ -71,7 +71,7 @@ class SuccessRecv(Response):
 		super().__init__(self.STATUS, self.MSG)
 
 
-class BadRequest(Response):
+class MetricBadRequest(Response):
 	STATUS = 400
 	MSG = "ERROR - Formato de metrica incorrecto"
 

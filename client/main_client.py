@@ -65,12 +65,18 @@ def main():
         client = Reporter(config_params["host"], config_params["port"])
         client.run(config_params["id"], config_params["value"])
     
-    elif config_params["mode"] == "agg":
+    elif config_params["mode"] == "aggregation":
+        query = {"metric_id": 2,
+                    "from_date":"2022-04-11 00:00:00",
+                    "to_date":"2022-04-14 00:00:00",
+                    "aggregation":"SUM",
+                    "aggregation_window_secs":0
+                    }
         client = AggregationQuery(config_params["host"], config_params["port"])
-        client.run()
+        client.run(query)
 
     else:
-        logging.error("Invalid mode")
+        logging.error("[MAIN_CLIENT] Invalid mode")
 
 
 

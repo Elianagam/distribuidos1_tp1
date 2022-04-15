@@ -15,7 +15,7 @@ class Socket():
 	def close_conection(self):
 		#self._socket.shutdown(socket.SHUT_RDWR)
 		self._socket.close()
-		logging.info("[SOCKET] Close")
+		logging.info(f"[SOCKET] Close from ({self._host}, {self._port})")
 
 
 	def send_message(self, response):

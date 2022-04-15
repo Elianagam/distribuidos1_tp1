@@ -1,22 +1,27 @@
 from threading import Lock
 import csv
 from datetime import datetime
+from os.path import exists
 import logging
+from common.vars import DATE_FORMAT, METRIC_DATA_FILENAME
 
 
 class MetricFileHandler():
 
 	FIELDNAMES = ["metric_id", "value", "datetime"]
-	DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 	def __init__(self):
 		self._lock = Lock()
 
 
+	def exists(self, metric_id):
+		return exists(metric_id)
+
+
 	def write(self, metric_data):
 		self._lock.acquire()
 		try:
-			with open(f"./data/metric_data_{metric_data['metric_id']}", "a") as file:
+			with open(METRIC_DATA_FILENAME.format(agg_req['metric_id']), "a") as file:
 				writer = csv.DictWriter(file, fieldnames=self.FIELDNAMES)
 				writer.writerow(metric_data)
 		finally:
@@ -26,18 +31,18 @@ class MetricFileHandler():
 	def read(self, agg_req):
 		self._lock.acquire()
 		try:
-			with open(f"./data/metric_data_{agg_req['metric_id']}", "r") as _file:
+			with open(METRIC_DATA_FILENAME.format(agg_req['metric_id']), "r") as _file:
 				rows = csv.DictReader(_file, fieldnames=self.FIELDNAMES)
 				agg = self.__agg_metrics(agg_req, rows)
-				return agg #rows[1:]
+				return agg
 		finally:
 			self._lock.release()
 
 
 	def __is_between_date(self, agg_req, row):
-		m_date = datetime.strptime(row["datetime"], self.DATE_FORMAT)
-		start = datetime.strptime(agg_req["from_date"], self.DATE_FORMAT)
-		end = datetime.strptime(agg_req["to_date"], self.DATE_FORMAT)
+		m_date = datetime.strptime(row["datetime"], DATE_FORMAT)
+		start = datetime.strptime(agg_req["from_date"], DATE_FORMAT)
+		end = datetime.strptime(agg_req["to_date"], DATE_FORMAT)
 		return start <= m_date < end
 
 
