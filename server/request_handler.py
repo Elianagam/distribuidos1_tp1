@@ -31,13 +31,14 @@ class RequestHandler(Thread):
 
 	def run(self):
 		while self._is_alive:
-			new_socket = None
 			try:
 				new_socket = self._socket.accept_new_connection()
 				self.__handle_client_connection(new_socket)
 
 			except OSError as e:
 				logging.info(f"[REQUEST_HANDLER] Error operating with socket: {e}")
+
+		
 
 
 	def __handle_client_connection(self, new_socket):
@@ -48,7 +49,7 @@ class RequestHandler(Thread):
 		if mode == MODE_REPORT:
 			is_done = self.__add_report(recv["data"])
 			self.__send_client_response(new_socket, is_done, recv["data"])
-			new_socket.close_conection()
+			new_socket.close_connection()
 
 		elif mode == MODE_AGG:
 			is_done = self.__add_query(new_socket, recv["data"])
@@ -57,12 +58,11 @@ class RequestHandler(Thread):
 		else:
 			logging.error(f"[REQUEST HANDLER] Invalid mode: {mode}")
 			new_socket.send_message(InvalidMode().serialize())
-			new_socket.close_conection()
+			new_socket.close_connection()
 
 
 	def __add_report(self, metric):
 		if not self._queue_reports.full():
-
 			if ReportMetric(metric).is_valid():
 				self._queue_reports.put(metric)
 				return SUCCESS_STATUS_CODE
@@ -74,7 +74,7 @@ class RequestHandler(Thread):
 	def __add_query(self, new_socket, query):
 		if not self._queue_querys.full():
 			if AggregationQuery(query).is_valid():
-				self._queue_querys.put({"query": query, "socket": new_socket}) #{"port": new_socket._port, "host": new_socket._host}
+				self._queue_querys.put({"query": query, "socket": new_socket})
 				return SUCCESS_STATUS_CODE
 			else:
 				return CLIENT_AGG_ERROR
@@ -96,10 +96,15 @@ class RequestHandler(Thread):
 
 		msg = msg.serialize()
 		new_socket.send_message(msg)
-		logging.info(f"[REQUEST_HANDLER] Send response: {msg}. To: {new_socket._host}")
+		logging.info(f"[REQUEST_HANDLER] Send response: {msg}. To: {new_socket.get_addr()}")
 
 
-	def _join_all(self):
+	def __close_all(self):
 		logging.info("[REQUEST_HANDLER] Close all connections")
-		for client in self._clients:
-			client.join()
+		self._queue_reports.join()
+		self._report_handler.join()
+		self._query_handler.join()
+		self._queue_querys.join()
+
+		self._socket.close_connection()
+

@@ -24,17 +24,14 @@ class QueryHandler(Thread):
 			else:
 				response = MetricIdNotFound().serialize()
 
-			logging.info(f"[QUERY_HANDLER] Recv Aggregation SOCKET - {recv_socket}")
 			recv_socket.send_message(response)
-
-			logging.debug(f"[QUERY_HANDLER] Send response SOCKET: ({recv_socket._host},{recv_socket._port})")
-			logging.info(f"[QUERY_HANDLER] Query proccessed, Agg result: {response}")
-
+			logging.info(f"[QUERY_HANDLER] Query proccessed, Agg result: {response}. Send to: {recv_socket.get_addr()}")
+			
 		except Exception as e:
 			logging.error(f"[QUERY_HANDLER] Send response fail {e}")
 		
-	#	finally:
-	#		new_connection.close_conection()
+		finally:
+			recv_socket.close_connection()
 
 
 	def run(self):
@@ -51,5 +48,4 @@ class QueryHandler(Thread):
 			except Exception as e:
 				logging.error(f"[QUERY_HANDLER] Error {e}")
 
-		self._queue_querys.join()
 

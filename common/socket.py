@@ -15,7 +15,7 @@ class Socket():
 	def get_addr(self):
 		return {"port": self._port, "host": self._host}
 
-	def close_conection(self):
+	def close_connection(self):
 		#self._socket.shutdown(socket.SHUT_RDWR)
 		self._socket.close()
 		logging.info(f"[SOCKET] Close from ({self._host}, {self._port})")

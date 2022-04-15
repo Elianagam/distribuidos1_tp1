@@ -17,7 +17,7 @@ class Reporter(Client):
         logging.info(f"[REPORTER] {response}")
         
         
-        self._socket.close_conection()
+        self._socket.close_connection()
 
 
 class ReportMetricMessage:

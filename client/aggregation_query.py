@@ -22,4 +22,4 @@ class AggregationQuery(Client):
         if (response['status'] != SUCCESS_STATUS_CODE):
             logging.error(response)
         
-        self._socket.close_conection()
+        self._socket.close_connection()
