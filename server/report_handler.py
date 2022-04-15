@@ -12,14 +12,12 @@ class ReportHandler(Thread):
 		self._is_alive = True
 
 	def run(self):
-		logging.info(f"[REPORT HANDLER] RUN")
-
 		while self._is_alive:
 			try:
-				metric = self._queue_reports.get()
-				logging.info(f"[REPORT HANDLER] Metric saved: {metric}")
+				metric = self._queue_reports.get(timeout=TIMEOUT_WAITING_MESSAGE)
 				self._queue_reports.task_done()
 				self._metrics_file.write(metric)
+				logging.info(f"[REPORT HANDLER] Metric saved: {metric}")
 			except:
 				continue
 

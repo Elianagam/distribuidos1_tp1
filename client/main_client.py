@@ -66,11 +66,11 @@ def main():
         client.run(config_params["id"], config_params["value"])
     
     elif config_params["mode"] == "aggregation":
-        query = {"metric_id": 2,
+        query = {"metric_id": "2",
                     "from_date":"2022-04-11 00:00:00",
                     "to_date":"2022-04-14 00:00:00",
                     "aggregation":"SUM",
-                    "aggregation_window_secs":0
+                    "aggregation_window_secs":0.0
                     }
         client = AggregationQuery(config_params["host"], config_params["port"])
         client.run(query)

@@ -13,7 +13,6 @@ class Reporter(Client):
         self._socket.send_message(json.dumps({"mode": self._mode,
             "data": ReportMetricMessage(metric_id, value).__dict__
             }))
-        logging.info("send metric")
         response = self._socket.recv_message()
         logging.info(f"[REPORTER] {response}")
         

@@ -12,7 +12,6 @@ class AggregationQuery(Client):
     def run(self, query):
         self._socket.send_message(json.dumps({"mode": self._mode, "data": query}))
         response = self._socket.recv_message()
-        logging.info(response)
 
         if (response['status'] == SUCCESS_STATUS_CODE):
             response = self._socket.recv_message(4096)

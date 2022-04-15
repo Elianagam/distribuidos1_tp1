@@ -28,7 +28,7 @@ class AggregationQuery(Request):
 			check_data =  (type(self.metric_id) is str) \
 				and (type(self.aggregation) is str) \
 				and (type(self.aggregation_window_secs) is float)
-
+			print(check_data)
 			# Checkea si el formato fecha es correcto
 			datetime.strptime(self.from_date, DATE_FORMAT)
 			datetime.strptime(self.to_date, DATE_FORMAT)

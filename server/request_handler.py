@@ -51,7 +51,7 @@ class RequestHandler(Thread):
 
 		elif mode == MODE_AGG:
 			is_done = self.__add_query(new_socket, recv["data"])
-			self.__send_client_response(new_socket, is_done)
+			self.__send_client_response(new_socket, is_done, recv["data"])
 	
 		else:
 			logging.error(f"[REQUEST HANDLER] Invalid mode: {mode}")
@@ -67,7 +67,6 @@ class RequestHandler(Thread):
 		if not self._queue_reports.full():
 
 			if ReportMetric(metric).is_valid():
-				logging.info(f"[REQUEST_HANDLER] Fill _queue_reports with: {metric}")
 				self._queue_reports.put(metric)
 				return SUCCESS_STATUS_CODE
 			else:
