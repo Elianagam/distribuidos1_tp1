@@ -40,8 +40,8 @@ def initialize_config():
         config_params["host"] = config["DEFAULT"]["client_host"]
         config_params["logging_level"] = config["DEFAULT"]["logging_level"]
         config_params["mode"] = config["DEFAULT"]["client_mode"]
-        config_params["id"] = int(config["DEFAULT"]["metric_id"])
-        config_params["value"] = int(config["DEFAULT"]["metric_value"])
+        config_params["id"] = config["DEFAULT"]["metric_id"]
+        config_params["value"] = float(config["DEFAULT"]["metric_value"])
 
         # TODO ADD MORE PARAMETERS
     except KeyError as e:

@@ -13,14 +13,10 @@ class Reporter(Client):
         self._socket.send_message(json.dumps({"mode": self._mode,
             "data": ReportMetricMessage(metric_id, value).__dict__
             }))
+        logging.info("send metric")
         response = self._socket.recv_message()
-        logging.info(response)
-
-        if (response['status'] == SUCCESS_STATUS_CODE):
-            self.__send_report(metric_id, value)
-
-        else:
-            logging.error(response)
+        logging.info(f"[REPORTER] {response}")
+        
         
         self._socket.close_conection()
 

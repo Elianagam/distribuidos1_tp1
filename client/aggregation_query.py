@@ -15,9 +15,8 @@ class AggregationQuery(Client):
         logging.info(response)
 
         if (response['status'] == SUCCESS_STATUS_CODE):
-            while (response['msg'] != 'close'):
-                response = self._socket.recv_message(4096)
-                logging.info(response)
+            response = self._socket.recv_message(4096)
+            logging.info(response)
 
         if (response['status'] != SUCCESS_STATUS_CODE):
             logging.error(response)

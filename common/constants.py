@@ -2,13 +2,9 @@ SUCCESS_STATUS_CODE = 200
 
 DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 
-METRIC_DATA_FILENAME = "./data/metric_data_{}.csv"
-
 MODE_REPORT = "report"
 
 MODE_AGG = "aggregation"
-
-SUCCESS = 200
 
 CLIENT_METRIC_ERROR = 400
 

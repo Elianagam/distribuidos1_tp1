@@ -3,8 +3,9 @@ import csv
 from datetime import datetime
 from os.path import exists
 import logging
-from common.constants import DATE_FORMAT, METRIC_DATA_FILENAME
+from common.constants import DATE_FORMAT
 
+METRIC_DATA_FILENAME = "./data/metric_data_{}.csv"
 
 class MetricFileHandler():
 
@@ -21,9 +22,10 @@ class MetricFileHandler():
 	def write(self, metric_data):
 		self._lock.acquire()
 		try:
-			with open(METRIC_DATA_FILENAME.format(agg_req['metric_id']), "a") as file:
+			with open(METRIC_DATA_FILENAME.format(metric_data['metric_id']), "a") as file:
 				writer = csv.DictWriter(file, fieldnames=self.FIELDNAMES)
 				writer.writerow(metric_data)
+
 		finally:
 			self._lock.release()
 

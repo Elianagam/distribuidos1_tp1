@@ -38,7 +38,7 @@ def initialize_config():
 		config_params["port"] = int(config["DEFAULT"]['server_port'])
 		config_params["listen_backlog"] = int(config["DEFAULT"]["server_listen_backlog"])
 		config_params["logging_level"] = config["DEFAULT"]["logging_level"]
-		config_params["queue_size"] = config["DEFAULT"]["queue_size"]
+		config_params["queue_size"] = int(config["DEFAULT"]["queue_size"])
 
 	except KeyError as e:
 		raise KeyError("Key was not found. Error: {} .Aborting server".format(e))
