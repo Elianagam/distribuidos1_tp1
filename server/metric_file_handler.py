@@ -7,7 +7,7 @@ from common.constants import DATE_FORMAT
 
 METRIC_DATA_FILENAME = "./data/metric_data_{}.csv"
 
-class MetricFileHandler():
+class MetricFileHandler:
 
 	FIELDNAMES = ["metric_id", "value", "datetime"]
 
@@ -16,7 +16,7 @@ class MetricFileHandler():
 
 
 	def exists(self, metric_id):
-		return exists(metric_id)
+		return exists(METRIC_DATA_FILENAME.format(metric_id))
 
 
 	def write(self, metric_data):
@@ -32,6 +32,7 @@ class MetricFileHandler():
 
 	def read(self, agg_req):
 		self._lock.acquire()
+		logging.info(f"[FILE HANDLER] Read data metric {agg_req['metric_id']}")
 		try:
 			with open(METRIC_DATA_FILENAME.format(agg_req['metric_id']), "r") as _file:
 				rows = csv.DictReader(_file, fieldnames=self.FIELDNAMES)
@@ -58,6 +59,8 @@ class MetricFileHandler():
 					agg.append((float(row["value"]), row["datetime"]))
 				else:
 					agg.append(float(row["value"]))
+		
+		#logging.debug(f"[FILE HANDLER] Agg data {agg}")
 
 		if not by_window:
 			# apply operation agg all data values
@@ -67,6 +70,8 @@ class MetricFileHandler():
 
 
 	def __apply_aggregation(self, op, metrics):
+		#logging.debug(f"[FILE HANDLER] Agg data {op} with data: {metrics}")
+
 		if op == "MAX":
 			return max(metrics)
 		elif op == "MIN":

@@ -1,4 +1,6 @@
 from datetime import datetime
+from common.constants import DATE_FORMAT
+
 
 class Request:
 	def __init__(self, dict_data):
@@ -28,10 +30,11 @@ class AggregationQuery(Request):
 			check_data =  (type(self.metric_id) is str) \
 				and (type(self.aggregation) is str) \
 				and (type(self.aggregation_window_secs) is float)
-			print(check_data)
+
 			# Checkea si el formato fecha es correcto
-			datetime.strptime(self.from_date, DATE_FORMAT)
-			datetime.strptime(self.to_date, DATE_FORMAT)
+			from_date = datetime.strptime(self.from_date, DATE_FORMAT)
+			to_date = datetime.strptime(self.to_date, DATE_FORMAT)
 			return check_data and True
-		except:
+		except e:
+			logging.error(f"[AGGREGATION QUERY] {e}")
 			return False

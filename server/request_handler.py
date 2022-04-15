@@ -34,13 +34,13 @@ class RequestHandler(Thread):
 			new_socket = None
 			try:
 				new_socket = self._socket.accept_new_connection()
-				self.__read_mode(new_socket)
+				self.__handle_client_connection(new_socket)
 
 			except OSError as e:
 				logging.info(f"[REQUEST_HANDLER] Error operating with socket: {e}")
 
 
-	def __read_mode(self, new_socket):
+	def __handle_client_connection(self, new_socket):
 		recv = new_socket.recv_message()
 		mode = recv["mode"]
 		logging.info(f"[REQUEST_HANDLER] Recv mode: {mode}")
@@ -62,7 +62,7 @@ class RequestHandler(Thread):
 
 
 	def __add_report(self, metric):
-		logging.info(f"[REQUEST_HANDLER] Add metric to queue: {metric}")
+		#logging.debug(f"[REQUEST_HANDLER] Add metric to queue: {metric}")
 
 		if not self._queue_reports.full():
 
@@ -75,20 +75,18 @@ class RequestHandler(Thread):
 
 
 	def __add_query(self, new_socket, query):
-		logging.info(f"[REQUEST_HANDLER] Add metric to queue: {query}")
+		logging.debug(f"[REQUEST_HANDLER] Add metric to queue: {query}")
 
 		if not self._queue_querys.full():
-			logging.info(f"[REQUEST_HANDLER] Fill _queue_querys with: {query}")
 			if AggregationQuery(query).is_valid():
-				self._queue_querys.put({"query": query, "socket": new_socket})
+				self._queue_querys.put({"query": query, "socket": new_socket.get_addr()}) #{"port": new_socket._port, "host": new_socket._host}
 				return SUCCESS_STATUS_CODE
 			else:
 				return CLIENT_AGG_ERROR
 		return SERVER_ERROR
 
-	def __send_client_response(self, new_socket, status_code, data):
-		logging.info(f"[REQUEST_HANDLER] Send Response: {status_code} from data: {data}")
 
+	def __send_client_response(self, new_socket, status_code, data):
 		if status_code == SUCCESS_STATUS_CODE:
 			msg = SuccessRecv()
 
@@ -103,7 +101,7 @@ class RequestHandler(Thread):
 
 		msg = msg.serialize()
 		new_socket.send_message(msg)
-		logging.info(f"[REQUEST_HANDLER] {msg}. Data {data}")
+		logging.info(f"[REQUEST_HANDLER] Send response: {msg}. To: {new_socket._host}")
 
 
 	def _join_all(self):

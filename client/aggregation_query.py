@@ -10,11 +10,13 @@ class AggregationQuery(Client):
 
 
     def run(self, query):
+        logging.info(f"[CLIENT] Send query {query}")
         self._socket.send_message(json.dumps({"mode": self._mode, "data": query}))
         response = self._socket.recv_message()
 
         if (response['status'] == SUCCESS_STATUS_CODE):
-            response = self._socket.recv_message(4096)
+            # Espera el resultado de la agregacion
+            #response = self._socket.recv_message()
             logging.info(response)
 
         if (response['status'] != SUCCESS_STATUS_CODE):
