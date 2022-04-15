@@ -4,7 +4,7 @@ import logging
 from response import *
 from datetime import datetime
 from metric_file_handler import MetricFileHandler
-from common.vars import DATE_FORMAT
+from common.constants import DATE_FORMAT
 
 
 class QueryHandler(Thread):
@@ -16,7 +16,7 @@ class QueryHandler(Thread):
 		self._queue_querys = queue_querys
 
 
-	def __metric_is_valid(self, metric):
+	def __query_is_valid(self, metric):
 		check_data =  ("metric_id" in metric and type(metric["metric_id"]) is str) \
 			and ("aggregation" in metric and type(metric["aggregation"]) is str) \
 			and ("aggregation_window_secs" in metric and type(metric["aggregation_window_secs"]) is float)
@@ -35,7 +35,7 @@ class QueryHandler(Thread):
 		query = self._socket.recv_message()
 		logging.info(f"[METRIC_HANDLER] Recv Aggregation Query - {query}")
 
-		is_valid = self.__metric_is_valid(metric)
+		is_valid = self.__query_is_valid(metric)
 		exists = self._metrics_file.exists()
 
 		if exists and is_valid:

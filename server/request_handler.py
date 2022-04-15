@@ -8,7 +8,7 @@ from queue import Queue
 from request_handler import ReportHandler
 from query_handler import QueryHandler
 from common.socket import Socket
-from common.vars import MODE_REPORT, MODE_AGG, SUCCESS, CLIENT_ERROR, SERVER_ERROR
+from common.constants import MODE_REPORT, MODE_AGG, SUCCESS, CLIENT_ERROR, SERVER_ERROR
 
 
 class RequestHandler(Thread):
@@ -21,8 +21,8 @@ class RequestHandler(Thread):
 		self._clients = []
 		self._queue_reports = Queue(maxsize=queue_size)
 		self._queue_querys = Queue(maxsize=queue_size)
-		self._request_handler = ReportHandler(new_socket, self._queue_reports)
-		self._query_handler = QueryHandler(new_socket, self._queue_querys)
+		self._request_handler = ReportHandler(self._queue_reports)
+		self._query_handler = QueryHandler(self._queue_querys)
 		self._request_handler.start()
 		self._query_handler.start()
 
@@ -50,7 +50,7 @@ class RequestHandler(Thread):
 			mode = recv["mode"]
 
 			if mode == MODE_REPORT:
-				is_done = self.__add_data(recv["data"])
+				is_done = self.__add_report(recv["data"])
 				self.__send_client_response(new_socket, is_done)
 				#self.__handler_report(recv["data"])
 				#new_client = ReportHandler(new_socket, self._queue_reports)
@@ -69,19 +69,43 @@ class RequestHandler(Thread):
 		self._clients.append(new_client)
 
 
+	def __add_report(self, metric):
+		if not self._queue_querys.full():
+			if self.__metric_is_valid(metric):
+				self._queue_querys.put(metric)
+				return SUCCESS
+			else:
+				return CLIENT_ERROR
+		return SERVER_ERROR
+
+
+	def __add_query(self, query):
+		if not self._queue_reports.full():
+			if self.__query_is_valid(query):
+				self._queue_reports.put(metric)
+				return SUCCESS
+			else:
+				return CLIENT_ERROR
+		return SERVER_ERROR
+
+
 	def __metric_is_valid(self, metric):
 		return ("metric_id" in metric and type(metric["metric_id"]) is str) \
 			and ("value" in metric and type(metric["value"]) is float)
 
 
-	def __add_report(self, new_socket, queue, data):
-		if not self._queue_reports.full():
-			if self.__metric_is_valid(data):
-				self._queue_reports.put(data)
-				return SUCCESS
-			else:
-				return CLIENT_ERROR
-		return SERVER_ERROR
+	def __query_is_valid(self, metric):
+		check_data =  ("metric_id" in metric and type(metric["metric_id"]) is str) \
+			and ("aggregation" in metric and type(metric["aggregation"]) is str) \
+			and ("aggregation_window_secs" in metric and type(metric["aggregation_window_secs"]) is float)
+
+		try:
+			# Para checkear si el formato fecha es correcto
+			datetime.strptime(metric["from_date"], DATE_FORMAT)
+			datetime.strptime(metric["to_date"], DATE_FORMAT)
+			return check_data and True
+		except e:
+			return False
 
 
 	def __send_client_response(self, new_socket, status_code):

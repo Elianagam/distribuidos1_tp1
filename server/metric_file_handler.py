@@ -3,7 +3,7 @@ import csv
 from datetime import datetime
 from os.path import exists
 import logging
-from common.vars import DATE_FORMAT, METRIC_DATA_FILENAME
+from common.constants import DATE_FORMAT, METRIC_DATA_FILENAME
 
 
 class MetricFileHandler():

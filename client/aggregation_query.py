@@ -1,7 +1,7 @@
 import json
 import logging
 from client import Client
-from common.vars import SUCCESS_STATUS_CODE, MODE_AGG
+from common.constants import SUCCESS_STATUS_CODE, MODE_AGG
 
 
 class AggregationQuery(Client):
