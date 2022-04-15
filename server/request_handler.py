@@ -9,6 +9,8 @@ from request_handler import ReportHandler
 from query_handler import QueryHandler
 from common.socket import Socket
 from common.constants import MODE_REPORT, MODE_AGG, SUCCESS, CLIENT_ERROR, SERVER_ERROR
+from request import *
+from response import *
 
 
 class RequestHandler(Thread):
@@ -18,7 +20,7 @@ class RequestHandler(Thread):
 		self._socket.bind_and_listen(listen_backlog)
 
 		self._is_alive = True
-		self._clients = []
+		#self._clients = []
 		self._queue_reports = Queue(maxsize=queue_size)
 		self._queue_querys = Queue(maxsize=queue_size)
 		self._request_handler = ReportHandler(self._queue_reports)
@@ -29,7 +31,7 @@ class RequestHandler(Thread):
 
 	def run(self):
 		while self._is_alive:
-			new_client = None
+			new_socket = None
 			try:
 				new_socket = self._socket.accept_new_connection()
 				self.__read_mode(new_socket)
@@ -38,11 +40,11 @@ class RequestHandler(Thread):
 				logging.info(f"[HANDLER] Error operating with socket: {e}")
 
 			finally:
-				if new_client != None:
-					new_client.close()
+				if new_socket != None:
+					new_socket.close()
 			
 
-		self._join_all()
+		#self._join_all()
 
 	def __read_mode(self, new_socket):
 		try:
@@ -51,82 +53,52 @@ class RequestHandler(Thread):
 
 			if mode == MODE_REPORT:
 				is_done = self.__add_report(recv["data"])
-				self.__send_client_response(new_socket, is_done)
-				#self.__handler_report(recv["data"])
-				#new_client = ReportHandler(new_socket, self._queue_reports)
+				self.__send_client_response(new_socket, is_done, recv["data"])
 
 			elif mode == MODE_AGG:
-				is_done = self.__add_data(recv["data"])
+				is_done = self.__add_data(new_socket, recv["data"])
 				self.__send_client_response(new_socket, is_done)
-				#new_socket.send_message(ValidMode().serialize())
-				#new_client = QueryHandler(new_socket, self._queue_querys)
 		
 			else:
 				logging.error(f"[REQUEST HANDLER] Invalid mode: {mode}")
 				new_socket.send_message(InvalidMode().serialize())
 
-		#new_client.start()
-		self._clients.append(new_client)
-
 
 	def __add_report(self, metric):
 		if not self._queue_querys.full():
-			if self.__metric_is_valid(metric):
+			if ReportMetric(metric).is_valid():
 				self._queue_querys.put(metric)
 				return SUCCESS
 			else:
-				return CLIENT_ERROR
+				return CLIENT_METRIC_ERROR
 		return SERVER_ERROR
 
 
-	def __add_query(self, query):
+	def __add_query(self, new_socket, query):
 		if not self._queue_reports.full():
-			if self.__query_is_valid(query):
-				self._queue_reports.put(metric)
+			if AggregationQuery(query).is_valid():
+				self._queue_reports.put({"query": query, "socket": new_socket})
 				return SUCCESS
 			else:
-				return CLIENT_ERROR
+				return CLIENT_AGG_ERROR
 		return SERVER_ERROR
 
-
-	def __metric_is_valid(self, metric):
-		return ("metric_id" in metric and type(metric["metric_id"]) is str) \
-			and ("value" in metric and type(metric["value"]) is float)
-
-
-	def __query_is_valid(self, metric):
-		check_data =  ("metric_id" in metric and type(metric["metric_id"]) is str) \
-			and ("aggregation" in metric and type(metric["aggregation"]) is str) \
-			and ("aggregation_window_secs" in metric and type(metric["aggregation_window_secs"]) is float)
-
-		try:
-			# Para checkear si el formato fecha es correcto
-			datetime.strptime(metric["from_date"], DATE_FORMAT)
-			datetime.strptime(metric["to_date"], DATE_FORMAT)
-			return check_data and True
-		except e:
-			return False
-
-
-	def __send_client_response(self, new_socket, status_code):
+	def __send_client_response(self, new_socket, status_code, data):
 		if status_code == SUCCESS:
 			msg = SuccessRecv()
 
 		elif status_code == CLIENT_METRIC_ERROR:
 			msg = MetricBadRequest()
-"""
+
 		elif status_code == CLIENT_AGG_ERROR:
 			msg = QueryBadRequest()
 
-		elif status_code == CLIENT_NOT_FOUND:
-			msg = MetricIdNotFound()
-"""
 		elif status_code == SERVER_ERROR:
 			msg = ServerError()
 
 		msg = msg.serialize()
 		new_socket.send_message(msg)
-		logging.info(f"[REQUEST_HANDLER] {msg}")
+		logging.info(f"[REQUEST_HANDLER] {msg}. Data {data}")
 
 
 	def _join_all(self):

@@ -9,28 +9,14 @@ from common.constants import DATE_FORMAT
 
 class QueryHandler(Thread):
 
-	def __init__(self, socket, queue_querys):
+	def __init__(self, queue_querys):
 		Thread.__init__(self)
-		self._socket = socket
+		#self._socket = socket
 		self._metrics_file = MetricFileHandler()
 		self._queue_querys = queue_querys
+		self._is_alive = True
 
-
-	def __query_is_valid(self, metric):
-		check_data =  ("metric_id" in metric and type(metric["metric_id"]) is str) \
-			and ("aggregation" in metric and type(metric["aggregation"]) is str) \
-			and ("aggregation_window_secs" in metric and type(metric["aggregation_window_secs"]) is float)
-
-		try:
-			# Para checkear si el formato fecha es correcto
-			datetime.strptime(metric["from_date"], DATE_FORMAT)
-			datetime.strptime(metric["to_date"], DATE_FORMAT)
-			return check_data and True
-		except e:
-			return False
-
-
-
+"""
 	def __recv_aggregation_query(self):
 		query = self._socket.recv_message()
 		logging.info(f"[METRIC_HANDLER] Recv Aggregation Query - {query}")
@@ -60,18 +46,37 @@ class QueryHandler(Thread):
 
 
 		return query
+"""
 
-	def __send_metrics(self, data):
-		rows = self._metrics_file.read(data)
-		self._socket.send_message(SuccessAggregation(rows).serialize())
+	def __proccess_query(self, query):
+		if (self._metrics_file.exists(query["metric_id"])):
+			response = self._metrics_file.read(query)
+		else:
+			response = MetricIdNotFound().serialize()
 
-		self._socket.send_message(CloseMessage().serialize())
+		return response
+
+
+	def __send_response(self, response, socket):
+		socket.send_message(response)
 
 
 	def run(self):
-		query = self.__recv_aggregation_query()
-		self.__send_metrics(query)
+		while self._is_alive:
+			try:
+				request = self._queue_querys.get(timeout=TIMEOUT_WAITING_MESSAGE)
+				self._queue_querys.task_done()
+				logging.info(f"[QUERY_HANDLER] Recv Aggregation Query - {request}")
 
-		self._socket.close_conection()
+				response = self._metrics_file.read(request["query"])
+				self.__send_response(response, request["socket"])
+
+				logging.info(f"[QUERY_HANDLER] Query proccessed: {request}, Agg result: {agg_result}")
+			except self._queue_querys.Empty:
+				continue
+
+		self._queue_querys.join()
+
+
 
 
