@@ -2,6 +2,7 @@ import json
 import logging
 from datetime import datetime
 from common.constants import SUCCESS_STATUS_CODE, MODE_REPORT
+from common.socket import Socket
 
 class Reporter:
     def __init__(self, host, port):

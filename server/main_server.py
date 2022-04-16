@@ -67,7 +67,7 @@ def main():
 		request_handler.start()
 
 	except SystemExit:
-        stop_event.set()
+		stop_event.set()
 
 
 if __name__ == "__main__":

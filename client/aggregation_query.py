@@ -1,7 +1,7 @@
 import json
 import logging
 from common.constants import SUCCESS_STATUS_CODE, MODE_AGG
-
+from common.socket import Socket
 
 class AggregationQuery:
     def __init__(self, host, port):
