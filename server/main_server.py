@@ -63,10 +63,11 @@ def main():
 		stop_event = Event()
 		request_handler = RequestHandler(config_params["port"], config_params["listen_backlog"], config_params["queue_size"], stop_event)
 
-		timer_event = Event()
-		request_handler.start()
+		#timer_event = Event()
+		request_handler.run()
 
 	except SystemExit:
+		logging.info(f"[MAIN_SERVER] Stop event is set")
 		stop_event.set()
 
 

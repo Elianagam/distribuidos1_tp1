@@ -21,6 +21,7 @@ class MetricFileHandler:
 	def write(self, metric_data):
 		self._lock.acquire()
 		try:
+			logging.debug(f"[METRIC_FILE_HANDLER] Write file {METRIC_DATA_FILENAME.format(metric_data['metric_id'])}")
 			with open(METRIC_DATA_FILENAME.format(metric_data['metric_id']), "a") as file:
 				writer = csv.DictWriter(file, fieldnames=self.FIELDNAMES)
 				writer.writerow(metric_data)
@@ -30,18 +31,35 @@ class MetricFileHandler:
 
 
 	def aggregate(self, agg_req):
-		rows = self.__read(agg_req)
-		agg = self.__agg_metrics(agg_req, rows)
-		return agg
+		self._lock.acquire()
+		logging.info(f"[FILE HANDLER] Read data metric {agg_req['metric_id']}")
+
+		try:
+			with open(METRIC_DATA_FILENAME.format(agg_req['metric_id']), "r") as _file:
+				rows = csv.DictReader(_file, fieldnames=self.FIELDNAMES)
+				return self.__agg_metrics(agg_req, rows)
+
+		finally:
+			self._lock.release()
+
 
 
 	def check_limit(self, limit_req):
-		rows = self.__read(agg_req)
-		limit_exceded = self.__is_exceded(rows, agg_req["limit"])
-		if limit_exceded:
-			agg = 2 #self.__agg_metrics(agg_req, rows)
-			return agg
-		return None
+		self._lock.acquire()
+		logging.info(f"[FILE HANDLER] Read data metric {limit_req['metric_id']}")
+
+		try:
+			with open(METRIC_DATA_FILENAME.format(limit_req['metric_id']), "r") as _file:
+				rows = csv.DictReader(_file, fieldnames=self.FIELDNAMES)
+
+				limit_exceded = self.__is_exceded(rows, limit_req["limit"])
+				if limit_exceded:
+					agg = 2 #self.__agg_metrics_by_limit(agg_req, rows)
+					return agg
+				return None
+
+		finally:
+			self._lock.release()
 
 	
 	def __is_exceded(self, rows, limit):
@@ -49,17 +67,6 @@ class MetricFileHandler:
 			if metric["value"] > limit:
 				return True
 		return False
-
-
-	def __read(self, agg_req):
-		self._lock.acquire()
-		logging.info(f"[FILE HANDLER] Read data metric {agg_req['metric_id']}")
-		try:
-			with open(METRIC_DATA_FILENAME.format(agg_req['metric_id']), "r") as _file:
-				rows = csv.DictReader(_file, fieldnames=self.FIELDNAMES)
-				return rows
-		finally:
-			self._lock.release()
 
 
 	def __is_between_date(self, agg_req, row):
@@ -70,28 +77,29 @@ class MetricFileHandler:
 
 
 	def __agg_metrics(self, agg_req, metrics):
-		agg = []
+		agg_data = []
 		by_window = agg_req["aggregation_window_secs"] > 0
 
 		for row in metrics:
 			if self.__is_between_date(agg_req, row):
 				if by_window:
-					agg.append((float(row["value"]), row["datetime"]))
+					agg_data.append((float(row["value"]), row["datetime"]))
 				else:
-					agg.append(float(row["value"]))
+					agg_data.append(float(row["value"]))
 		
-		#logging.debug(f"[FILE HANDLER] Agg data {agg}")
-
-		if not by_window:
-			# apply operation agg all data values
-			return self.__apply_aggregation(agg_req["aggregation"], agg)
+		if by_window:
+			return self.__apply_aggregation(agg_req["aggregation"], agg_data)
 		else:
-			self.__aggregation_by_window(agg_req["aggregation_window_secs"], agg_req["aggregation"], agg)
+			# apply operation agg all data values
+			return self.__aggregation_by_window(agg_req["aggregation_window_secs"], agg_req["aggregation"], agg_data)
+		
+
+	def __agg_metrics_by_limit(self, agg_req, rows):
+		# TODO
+		pass
 
 
 	def __apply_aggregation(self, op, metrics):
-		#logging.debug(f"[FILE HANDLER] Agg data {op} with data: {metrics}")
-
 		if op == "MAX":
 			return max(metrics)
 		elif op == "MIN":

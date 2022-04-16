@@ -61,7 +61,7 @@ def main():
     # Initialize server and start server loop
     if config_params["mode"] == "report":
         client = Reporter(config_params["host"], config_params["port"])
-        metric = {"metric_id": "2", "value": 4.0}
+        metric = {"metric_id": "4", "value": 4.0}
         client.run(metric)
     
     elif config_params["mode"] == "aggregation":

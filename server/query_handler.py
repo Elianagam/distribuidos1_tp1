@@ -18,18 +18,22 @@ class QueryHandler(Thread):
 	def __proccess_query(self, query, recv_socket):
 		try:
 			if (self._metrics_file.exists(query["metric_id"])):
+				print(query)
+				print("aggregate")
 				agg_result = self._metrics_file.aggregate(query)
+				print(agg_result)
 				response = SuccessAggregation(agg_result).serialize()
 			else:
 				response = MetricIdNotFound().serialize()
 
-			recv_socket.send_message(response)
 			logging.info(f"[QUERY_HANDLER] Query proccessed, Agg result: {response}. Send to: {recv_socket.get_addr()}")
+			recv_socket.send_message(response)
 
 		except Exception as e:
 			logging.error(f"[QUERY_HANDLER] Send response fail {e}")
 		
 		finally:
+			logging.info(f"[QUERY_HANDLER] CLOSE SOCKET")
 			recv_socket.close_connection()
 
 

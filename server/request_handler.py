@@ -40,23 +40,24 @@ class RequestHandler(Thread):
 		logging.info(f"[REQUEST_HANDLER] Recv mode: {mode}")
 
 		if mode == MODE_REPORT:
+			logging.info(f"[REQUEST_HANDLER] Data: {recv['data']}")
 			status_code = self.__add_report(recv["data"])
 			self.__send_client_response(new_socket, status_code, recv["data"])
-			new_socket.close_connection()
 
 		elif mode == MODE_AGG:
+			logging.info(f"[REQUEST_HANDLER] Data: {recv['data']}")
 			status_code = self.__add_query(new_socket, recv["data"])
 			self.__send_client_response(new_socket, status_code, recv["data"])
 	
 		else:
 			logging.error(f"[REQUEST HANDLER] Invalid mode: {mode}")
 			new_socket.send_message(InvalidMode().serialize())
-			new_socket.close_connection()
 
 
 	def __add_report(self, metric):
 		if not self._queue_reports.full():
 			if ReportMetric(metric).is_valid():
+				logging.debug(f"[REQUEST_HANDLER] Add new metric to queue ")
 				self._queue_reports.put(metric)
 				return SUCCESS_STATUS_CODE
 			else:
@@ -67,6 +68,7 @@ class RequestHandler(Thread):
 	def __add_query(self, new_socket, query):
 		if not self._queue_querys.full():
 			if AggregationQuery(query).is_valid():
+				logging.debug(f"[REQUEST_HANDLER] Add new query to queue")
 				self._queue_querys.put({"query": query, "socket": new_socket})
 				return SUCCESS_STATUS_CODE
 			else:
