@@ -16,9 +16,12 @@ class RequestHandler(Thread):
 		self._socket.bind_and_listen(listen_backlog)
 		self._stop_event = stop_event
 
+		self._queue_clients = Queue()
+		self._client_handlers = [Thread(target=self.__handle_client_connection) for i in range(n_workers)]
+
 		self._queue_reports = Queue(maxsize=queue_size)
 		self._queue_querys = Queue(maxsize=queue_size)
-		# TODO HANDLERS X N_WORKERS
+
 		self._report_handler = ReportHandler(self._queue_reports, self._stop_event)
 		self._query_handler = QueryHandler(self._queue_querys, self._stop_event)
 		self._report_handler.start()
@@ -26,18 +29,31 @@ class RequestHandler(Thread):
 
 
 	def run(self):
+		for client in self._client_handlers:
+			client.start()
+
 		while not self._stop_event.is_set():
 			try:
 				new_socket = self._socket.accept_new_connection()
-				self.__handle_client_connection(new_socket)
+				self._queue_clients.put(new_socket)
+				#self.__handle_client_connection(new_socket)
 
 			except OSError as e:
 				logging.info(f"[REQUEST_HANDLER] Error operating with socket: {e}")
 
 		self.__close_all()
 
+	def __handle_client_connection(self):
+		while not self._stop_event.is_set():
+			try:
+				new_client_socket = self._queue_clients.get()
+				self.__handle_client_request(new_client_socket)
+			except OSError as e:
+				logging.info(f"[REQUEST_HANDLER] Error operating with socket: {e}")
 
-	def __handle_client_connection(self, new_socket):
+
+
+	def __handle_client_request(self, new_socket):
 		recv = new_socket.recv_message()
 		mode = recv["mode"]
 		logging.info(f"[REQUEST_HANDLER] Recv mode: {mode}")
@@ -46,6 +62,7 @@ class RequestHandler(Thread):
 			logging.info(f"[REQUEST_HANDLER] Data: {recv['data']}")
 			status_code = self.__add_report(recv["data"])
 			self.__send_client_response(new_socket, status_code, recv["data"])
+			#new_socket.close_connection()
 
 		elif mode == MODE_AGG:
 			logging.info(f"[REQUEST_HANDLER] Data: {recv['data']}")
@@ -55,6 +72,7 @@ class RequestHandler(Thread):
 		else:
 			logging.error(f"[REQUEST HANDLER] Invalid mode: {mode}")
 			new_socket.send_message(InvalidMode().serialize())
+			#new_socket.close_connection()
 
 
 	def __add_report(self, metric):

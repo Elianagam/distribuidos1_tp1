@@ -18,10 +18,7 @@ class QueryHandler(Thread):
 	def __proccess_query(self, query, recv_socket):
 		try:
 			if (self._metrics_file.exists(query["metric_id"])):
-				print(query)
-				print("aggregate")
 				agg_result = self._metrics_file.aggregate(query)
-				print(agg_result)
 				response = SuccessAggregation(agg_result).serialize()
 			else:
 				response = MetricIdNotFound().serialize()

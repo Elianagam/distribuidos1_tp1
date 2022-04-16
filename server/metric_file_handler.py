@@ -88,10 +88,10 @@ class MetricFileHandler:
 					agg_data.append(float(row["value"]))
 		
 		if by_window:
-			return self.__apply_aggregation(agg_req["aggregation"], agg_data)
+			return self.__aggregation_by_window(agg_req["aggregation_window_secs"], agg_req["aggregation"], agg_data)
 		else:
 			# apply operation agg all data values
-			return self.__aggregation_by_window(agg_req["aggregation_window_secs"], agg_req["aggregation"], agg_data)
+			return self.__apply_aggregation(agg_req["aggregation"], agg_data)
 		
 
 	def __agg_metrics_by_limit(self, agg_req, rows):
