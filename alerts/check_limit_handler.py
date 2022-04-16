@@ -9,19 +9,19 @@ class CheckLimitHandler(Thread):
 		self._alert = alert
 		self._queue_alert_to_log = queue_alert_to_log
 		self._stop_event = stop_event
-		self._end = Event()
+		self._finish = Event()
 		self._metrics_file = MetricFileHandler()
 
 	def has_end(self):
-		return self._end.is_set()
+		return self._finish.is_set()
 
 	def run(self):
 		try:
-			if not self._stop_event.is_set() and not self._end.is_set():
+			if not self._stop_event.is_set() and not self._finish.is_set():
 				agg = self._metrics_file.check_limit(self._alert)
 				if agg != None:
 					self._queue_alert_to_log.put(agg)
-					self._end.set()
+					self._finish.set()
 					logging.info(f"[CHECK_LIMIT_HANDLER] Limit check for metric [{self._alert['metric_id']}] has end.")
 		except Exception as e:
 			logging.error(f"[CHECK_LIMIT_HANDLER] Error {e}")

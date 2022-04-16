@@ -29,11 +29,16 @@ class AlertHandler(Thread):
 				except Exception as e:
 					logging.error(f"[ALERT HANDLER] {e}")
 
-			for i in range(self._checkers):
-				if self._checkers[i].has_end():
-					self._checkers[i].join()
-					del self._checkers[i]
+				self.__join()
 
+	def __join(self):
+		print("START: ", len(self._checkers))
+		for c in self._checkers:
+			if c.has_end():
+				c.join()
+				self._checkers.remove(c)
+
+		print("END", len(self._checkers))
 
 
 	def __read_set_alerts(self):
@@ -43,6 +48,7 @@ class AlertHandler(Thread):
 			for alert in rows:
 				checker = CheckLimitHandler(alert, self._queue_alert_to_log, self._stop_event)
 				checker.start()
+				self._checkers.append(checker)
 
 
 	def __log_alerts(self):
