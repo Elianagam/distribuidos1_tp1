@@ -5,8 +5,8 @@ from report_handler import ReportHandler
 from query_handler import QueryHandler
 from common.socket import Socket
 from common.constants import *
-from request import *
-from response import *
+from messages.request import *
+from messages.response import *
 
 
 class RequestHandler(Thread):

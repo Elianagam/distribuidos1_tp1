@@ -46,15 +46,13 @@ class MetricFileHandler:
 
 	def check_limit(self, limit_req):
 		self._lock.acquire()
-		logging.info(f"[FILE HANDLER] Read data metric {limit_req['metric_id']}")
-
 		try:
 			with open(METRIC_DATA_FILENAME.format(limit_req['metric_id']), "r") as _file:
 				rows = csv.DictReader(_file, fieldnames=self.FIELDNAMES)
 
 				limit_exceded = self.__is_exceded(rows, limit_req["limit"])
 				if limit_exceded:
-					agg = 2 #self.__agg_metrics_by_limit(agg_req, rows)
+					agg = {"msg": "LIMIT EXCEDED", "metric_id": limit_req["metric_id"]} #self.__agg_metrics_by_limit(agg_req, rows)
 					return agg
 				return None
 
@@ -64,7 +62,7 @@ class MetricFileHandler:
 	
 	def __is_exceded(self, rows, limit):
 		for metric in rows:
-			if metric["value"] > limit:
+			if float(metric["value"]) > float(limit):
 				return True
 		return False
 

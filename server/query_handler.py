@@ -1,6 +1,6 @@
 from threading import Thread
 import logging
-from response import SuccessAggregation, MetricIdNotFound
+from messages.response import SuccessAggregation, MetricIdNotFound
 from metric_file_handler import MetricFileHandler
 from queue import Queue, Empty
 from common.constants import TIMEOUT_WAITING_MESSAGE

@@ -1,2 +1,4 @@
 metric_id, limit, aggregation, aggregation_window_secs
-2, 30, SUM, 0
+2, 15, SUM, 0
+4, 100, SUM, 0
+3, 10, SUM, 0
