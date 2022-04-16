@@ -40,8 +40,6 @@ def initialize_config():
         config_params["host"] = config["DEFAULT"]["client_host"]
         config_params["logging_level"] = config["DEFAULT"]["logging_level"]
         config_params["mode"] = config["DEFAULT"]["client_mode"]
-        config_params["id"] = config["DEFAULT"]["metric_id"]
-        config_params["value"] = float(config["DEFAULT"]["metric_value"])
 
         # TODO ADD MORE PARAMETERS
     except KeyError as e:
@@ -63,7 +61,8 @@ def main():
     # Initialize server and start server loop
     if config_params["mode"] == "report":
         client = Reporter(config_params["host"], config_params["port"])
-        client.run(config_params["id"], config_params["value"])
+        metric = {"metric_id": "2", "value": 4.0}
+        client.run(metric)
     
     elif config_params["mode"] == "aggregation":
         query = {"metric_id": "2",

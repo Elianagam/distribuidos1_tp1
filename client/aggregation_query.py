@@ -1,13 +1,13 @@
 import json
 import logging
-from client import Client
 from common.constants import SUCCESS_STATUS_CODE, MODE_AGG
 
 
-class AggregationQuery(Client):
+class AggregationQuery:
     def __init__(self, host, port):
-        super().__init__(host, port, MODE_AGG)
-
+        self._socket = Socket(host, port)
+        self._socket.connect()
+        self._mode = MODE_AGG
 
     def run(self, query):
         logging.info(f"[CLIENT] Send query {query}")

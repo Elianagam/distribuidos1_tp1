@@ -1,17 +1,21 @@
-SUCCESS_STATUS_CODE = 200
-
 DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 MODE_REPORT = "report"
 
 MODE_AGG = "aggregation"
 
+SUCCESS_STATUS_CODE = 200
+
 CLIENT_METRIC_ERROR = 400
 
 CLIENT_AGG_ERROR = 405
 
-CLIENT_NOT_FOUND = 404
-
 SERVER_ERROR = 500
 
 TIMEOUT_WAITING_MESSAGE = 1
+
+METRIC_DATA_FILENAME = "./data/metric_data_{}.csv"
+
+TIME_ALERT = 60 # 60 seg, 1 min
+
+CONFIG_ALERT_FILENAME = "./data/config_alerts.csv" 

@@ -1,8 +1,4 @@
-import socket
-from threading import Thread, Timer
-import traceback
-import os
-import json
+from threading import Thread
 import logging
 from queue import Queue
 from report_handler import ReportHandler
@@ -14,31 +10,28 @@ from response import *
 
 
 class RequestHandler(Thread):
-	def __init__(self, port, listen_backlog, queue_size):
+	def __init__(self, port, listen_backlog, queue_size, stop_event):
 		Thread.__init__(self)
 		self._socket = Socket('', port)
 		self._socket.bind_and_listen(listen_backlog)
+		self._stop_event = stop_event
 
-		self._is_alive = True
-		#self._clients = []
 		self._queue_reports = Queue(maxsize=queue_size)
 		self._queue_querys = Queue(maxsize=queue_size)
-		self._report_handler = ReportHandler(self._queue_reports)
-		self._query_handler = QueryHandler(self._queue_querys)
+		self._report_handler = ReportHandler(self._queue_reports, self._stop_event)
+		self._query_handler = QueryHandler(self._queue_querys, self._stop_event)
 		self._report_handler.start()
 		self._query_handler.start()
 
 
 	def run(self):
-		while self._is_alive:
+		while not self._stop_event.is_set():
 			try:
 				new_socket = self._socket.accept_new_connection()
 				self.__handle_client_connection(new_socket)
 
 			except OSError as e:
 				logging.info(f"[REQUEST_HANDLER] Error operating with socket: {e}")
-
-		
 
 
 	def __handle_client_connection(self, new_socket):
@@ -47,13 +40,13 @@ class RequestHandler(Thread):
 		logging.info(f"[REQUEST_HANDLER] Recv mode: {mode}")
 
 		if mode == MODE_REPORT:
-			is_done = self.__add_report(recv["data"])
-			self.__send_client_response(new_socket, is_done, recv["data"])
+			status_code = self.__add_report(recv["data"])
+			self.__send_client_response(new_socket, status_code, recv["data"])
 			new_socket.close_connection()
 
 		elif mode == MODE_AGG:
-			is_done = self.__add_query(new_socket, recv["data"])
-			self.__send_client_response(new_socket, is_done, recv["data"])
+			status_code = self.__add_query(new_socket, recv["data"])
+			self.__send_client_response(new_socket, status_code, recv["data"])
 	
 		else:
 			logging.error(f"[REQUEST HANDLER] Invalid mode: {mode}")
@@ -103,8 +96,9 @@ class RequestHandler(Thread):
 		logging.info("[REQUEST_HANDLER] Close all connections")
 		self._queue_reports.join()
 		self._report_handler.join()
-		self._query_handler.join()
+
 		self._queue_querys.join()
+		self._query_handler.join()
 
 		self._socket.close_connection()
 

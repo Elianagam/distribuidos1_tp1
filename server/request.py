@@ -35,6 +35,6 @@ class AggregationQuery(Request):
 			from_date = datetime.strptime(self.from_date, DATE_FORMAT)
 			to_date = datetime.strptime(self.to_date, DATE_FORMAT)
 			return check_data and True
-		except e:
-			logging.error(f"[AGGREGATION QUERY] {e}")
+		except:
+			logging.error(f"[AGGREGATION QUERY] Error en el formato de las fechas")
 			return False

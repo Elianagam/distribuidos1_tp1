@@ -2,6 +2,8 @@ import os
 import logging
 from configparser import ConfigParser
 from request_handler import RequestHandler
+from threading import Event
+
 
 
 def initialize_log(logging_level):
@@ -49,16 +51,23 @@ def initialize_config():
 
 
 def main():
-	config_params = initialize_config()
-	initialize_log(config_params["logging_level"])
+	try:
+		config_params = initialize_config()
+		initialize_log(config_params["logging_level"])
 
-	# Log config parameters at the beginning of the program to verify the configuration
-	# of the component
-	logging.debug("Server configuration: {}".format(config_params))
+		# Log config parameters at the beginning of the program to verify the configuration
+		# of the component
+		logging.debug("Server configuration: {}".format(config_params))
 
-	# Initialize server and start server loop
-	request_handler = RequestHandler(config_params["port"], config_params["listen_backlog"], config_params["queue_size"])
-	request_handler.run()
+		# Initialize server and start server loop
+		stop_event = Event()
+		request_handler = RequestHandler(config_params["port"], config_params["listen_backlog"], config_params["queue_size"], stop_event)
+
+		timer_event = Event()
+		request_handler.start()
+
+	except SystemExit:
+        stop_event.set()
 
 
 if __name__ == "__main__":

@@ -3,9 +3,8 @@ import csv
 from datetime import datetime
 from os.path import exists
 import logging
-from common.constants import DATE_FORMAT
+from common.constants import DATE_FORMAT, METRIC_DATA_FILENAME
 
-METRIC_DATA_FILENAME = "./data/metric_data_{}.csv"
 
 class MetricFileHandler:
 
@@ -30,14 +29,35 @@ class MetricFileHandler:
 			self._lock.release()
 
 
-	def read(self, agg_req):
+	def aggregate(self, agg_req):
+		rows = self.__read(agg_req)
+		agg = self.__agg_metrics(agg_req, rows)
+		return agg
+
+
+	def check_limit(self, limit_req):
+		rows = self.__read(agg_req)
+		limit_exceded = self.__is_exceded(rows, agg_req["limit"])
+		if limit_exceded:
+			agg = 2 #self.__agg_metrics(agg_req, rows)
+			return agg
+		return None
+
+	
+	def __is_exceded(self, rows, limit):
+		for metric in rows:
+			if metric["value"] > limit:
+				return True
+		return False
+
+
+	def __read(self, agg_req):
 		self._lock.acquire()
 		logging.info(f"[FILE HANDLER] Read data metric {agg_req['metric_id']}")
 		try:
 			with open(METRIC_DATA_FILENAME.format(agg_req['metric_id']), "r") as _file:
 				rows = csv.DictReader(_file, fieldnames=self.FIELDNAMES)
-				agg = self.__agg_metrics(agg_req, rows)
-				return agg
+				return rows
 		finally:
 			self._lock.release()
 

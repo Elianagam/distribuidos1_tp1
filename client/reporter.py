@@ -1,17 +1,17 @@
 import json
 import logging
-from client import Client
 from datetime import datetime
 from common.constants import SUCCESS_STATUS_CODE, MODE_REPORT
 
-class Reporter(Client):
+class Reporter:
     def __init__(self, host, port):
-        super().__init__(host, port, MODE_REPORT)
+        self._socket = Socket(host, port)
+        self._socket.connect()
+        self._mode = MODE_REPORT
 
-
-    def run(self, metric_id, value):
+    def run(self, metric):
         self._socket.send_message(json.dumps({"mode": self._mode,
-            "data": ReportMetricMessage(metric_id, value).__dict__
+            "data": ReportMetricMessage(metric["metric_id"], metric["value"]).__dict__
             }))
         response = self._socket.recv_message()
         logging.info(f"[REPORTER] {response}")
