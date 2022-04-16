@@ -10,7 +10,7 @@ from response import *
 
 
 class RequestHandler(Thread):
-	def __init__(self, port, listen_backlog, queue_size, stop_event):
+	def __init__(self, port, listen_backlog, queue_size, stop_event, n_workers):
 		Thread.__init__(self)
 		self._socket = Socket('', port)
 		self._socket.bind_and_listen(listen_backlog)
@@ -18,6 +18,7 @@ class RequestHandler(Thread):
 
 		self._queue_reports = Queue(maxsize=queue_size)
 		self._queue_querys = Queue(maxsize=queue_size)
+		# TODO HANDLERS X N_WORKERS
 		self._report_handler = ReportHandler(self._queue_reports, self._stop_event)
 		self._query_handler = QueryHandler(self._queue_querys, self._stop_event)
 		self._report_handler.start()
@@ -32,6 +33,8 @@ class RequestHandler(Thread):
 
 			except OSError as e:
 				logging.info(f"[REQUEST_HANDLER] Error operating with socket: {e}")
+
+		self.__close_all()
 
 
 	def __handle_client_connection(self, new_socket):

@@ -41,6 +41,7 @@ def initialize_config():
 		config_params["listen_backlog"] = int(config["DEFAULT"]["server_listen_backlog"])
 		config_params["logging_level"] = config["DEFAULT"]["logging_level"]
 		config_params["queue_size"] = int(config["DEFAULT"]["queue_size"])
+		config_params["n_workers"] = int(config["DEFAULT"]["n_workers"])
 
 	except KeyError as e:
 		raise KeyError("Key was not found. Error: {} .Aborting server".format(e))
@@ -61,7 +62,8 @@ def main():
 
 		# Initialize server and start server loop
 		stop_event = Event()
-		request_handler = RequestHandler(config_params["port"], config_params["listen_backlog"], config_params["queue_size"], stop_event)
+		request_handler = RequestHandler(config_params["port"], config_params["listen_backlog"], 
+			config_params["queue_size"], stop_event, config_params["n_workers"])
 
 		#timer_event = Event()
 		request_handler.run()
