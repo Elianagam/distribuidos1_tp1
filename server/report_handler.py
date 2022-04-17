@@ -16,7 +16,7 @@ class ReportHandler(Thread):
 		while not self._stop_event.is_set():
 			try:
 				metric = self._queue_reports.get(timeout=TIMEOUT_WAITING_MESSAGE)
-				logging.info(f"[REPORT_HANDLER] Metric get from queue: {metric}")
+				#logging.info(f"[REPORT_HANDLER] Metric get from queue: {metric}")
 				self._queue_reports.task_done()
 				self._metrics_file.write(metric)
 				logging.info(f"[REPORT_HANDLER] Metric saved: {metric}")

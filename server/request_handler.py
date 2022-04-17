@@ -1,6 +1,6 @@
 from threading import Thread
 import logging
-from queue import Queue
+from queue import Queue, Empty
 from report_handler import ReportHandler
 from query_handler import QueryHandler
 from common.socket import Socket
@@ -36,7 +36,6 @@ class RequestHandler(Thread):
 			try:
 				new_socket = self._socket.accept_new_connection()
 				self._queue_clients.put(new_socket)
-				#self.__handle_client_connection(new_socket)
 
 			except OSError as e:
 				logging.info(f"[REQUEST_HANDLER] Error operating with socket: {e}")
@@ -46,10 +45,15 @@ class RequestHandler(Thread):
 	def __handle_client_connection(self):
 		while not self._stop_event.is_set():
 			try:
-				new_client_socket = self._queue_clients.get()
+				new_client_socket = self._queue_clients.get(timeout=TIMEOUT_WAITING_MESSAGE)
 				self.__handle_client_request(new_client_socket)
+			
+			except Empty:
+				continue
+
 			except OSError as e:
 				logging.info(f"[REQUEST_HANDLER] Error operating with socket: {e}")
+
 
 
 
@@ -62,7 +66,7 @@ class RequestHandler(Thread):
 			logging.info(f"[REQUEST_HANDLER] Data: {recv['data']}")
 			status_code = self.__add_report(recv["data"])
 			self.__send_client_response(new_socket, status_code, recv["data"])
-			#new_socket.close_connection()
+			new_socket.close_connection()
 
 		elif mode == MODE_AGG:
 			logging.info(f"[REQUEST_HANDLER] Data: {recv['data']}")
@@ -72,7 +76,7 @@ class RequestHandler(Thread):
 		else:
 			logging.error(f"[REQUEST HANDLER] Invalid mode: {mode}")
 			new_socket.send_message(InvalidMode().serialize())
-			#new_socket.close_connection()
+			new_socket.close_connection()
 
 
 	def __add_report(self, metric):

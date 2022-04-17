@@ -69,7 +69,7 @@ def main():
                     "from_date":"2022-04-11 00:00:00",
                     "to_date":"2022-04-14 00:00:00",
                     "aggregation":"SUM",
-                    "aggregation_window_secs":0.0
+                    "aggregation_window_secs":3.0
                     }
         client = AggregationQuery(config_params["host"], config_params["port"])
         client.run(query)
