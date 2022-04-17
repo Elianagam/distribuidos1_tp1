@@ -127,7 +127,6 @@ class MetricFileHandler:
 			start, end = self.__start_end_window(metrics[0][1], w_size)
 			split_by_window = [ [metrics[0][0]] ]
 			
-			split_by_window # skip first value already in window
 			for value,sdate in metrics[1:]:
 				m_date = sdate#self.__string_to_date(sdate)
 				if self.__is_between_date(start, end, m_date):
