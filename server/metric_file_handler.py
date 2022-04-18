@@ -36,7 +36,7 @@ class MetricFileHandler:
 		try:
 			with open(METRIC_DATA_FILENAME.format(agg_req['metric_id']), "r") as _file:
 				rows = csv.DictReader(_file, fieldnames=self.FIELDNAMES)
-				return self.__agg_metrics(agg_req, rows)
+				return self.__split_data(agg_req, rows)
 
 		finally:
 			self._lock.release()
@@ -47,10 +47,12 @@ class MetricFileHandler:
 		try:
 			with open(METRIC_DATA_FILENAME.format(limit_req['metric_id']), "r") as _file:
 				rows = csv.DictReader(_file, fieldnames=self.FIELDNAMES)
-
-				limit_exceded = self.__is_exceded(rows, limit_req["limit"])
+				
+				agg_data = self.__split_data(limit_req, rows)
+				limit_exceded = self.__is_exceded(agg_data, limit_req["limit"])
+				
 				if limit_exceded:
-					agg = {"msg": "LIMIT EXCEDED", "metric_id": limit_req["metric_id"]} #self.__agg_metrics_by_limit(agg_req, rows)
+					agg = {"limit_exceded": agg_data, "alert": limit_req} #self.__agg_metrics_by_limit(agg_req, rows)
 					return agg
 				return None
 
@@ -58,16 +60,23 @@ class MetricFileHandler:
 			self._lock.release()
 
 	
-	def __is_exceded(self, rows, limit):
-		for metric in rows:
-			if float(metric["value"]) > float(limit):
-				return True
-		return False
+	def __is_exceded(self, result, limit):
+		if result == None or result == []: return False
 
+		if type(result) == list and len(result) > 1:
+			for windows in result:
+				for value in windows:
+					if float(value) > float(limit):
+						return True
+			return False
 
-	def __agg_metrics(self, agg_req, metrics):
+		# Si no es por ventanas es una lista de un unico elemento
+		return result> float(limit)
+		
+
+	def __split_data(self, agg_req, metrics):
 		agg_data = []
-		by_window = agg_req["aggregation_window_secs"] > 0
+		by_window = float(agg_req["aggregation_window_secs"]) > 0
 
 		for row in metrics:
 			if self.__is_between_date(agg_req["from_date"], agg_req["to_date"], row["datetime"]):
@@ -75,17 +84,11 @@ class MetricFileHandler:
 					agg_data.append( (float(row["value"]), row["datetime"]) )
 				else:
 					agg_data.append(float(row["value"]))
-		
 		if by_window:
 			return self.__aggregation_by_window(agg_req["aggregation_window_secs"], agg_req["aggregation"], agg_data)
 		else:
 			# apply operation agg all data values
 			return self.__apply_aggregation(agg_req["aggregation"], agg_data)
-		
-
-	def __agg_metrics_by_limit(self, agg_req, rows):
-		# TODO
-		pass
 
 
 	def __apply_aggregation(self, op, metrics):
@@ -113,6 +116,7 @@ class MetricFileHandler:
 	def __string_to_date(self, sdate):
 		return datetime.strptime(sdate, DATE_FORMAT)
 
+
 	def __start_end_window(self, sdate, w_size):
 		try:
 			start_win_date = self.__string_to_date(sdate)
@@ -120,6 +124,7 @@ class MetricFileHandler:
 			return start_win_date, end_win_date
 		except Exception as e:
 			logging.error(f"[METRIC_FILE_HANDLER] Error in create window_bucket date: {e}")
+
 
 	def __aggregation_by_window(self, w_size, op, metrics):
 		# metrics: tuple (value, date)

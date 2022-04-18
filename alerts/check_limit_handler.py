@@ -24,5 +24,5 @@ class CheckLimitHandler(Thread):
 					self._finish.set()
 					logging.info(f"[CHECK_LIMIT_HANDLER] Limit check for metric [{self._alert['metric_id']}] has end.")
 		except Exception as e:
-			logging.error(f"[CHECK_LIMIT_HANDLER] Error {e}")
+			logging.error(f"[CHECK_LIMIT_HANDLER] Error run: {e}")
 	
