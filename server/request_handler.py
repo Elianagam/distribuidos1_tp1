@@ -120,6 +120,11 @@ class RequestHandler(Thread):
 
 	def __close_all(self):
 		logging.info("[REQUEST_HANDLER] Close all connections")
+		self._queue_clients.join()
+		
+		for c in self._client_handlers:
+			c.join()
+
 		self._queue_reports.join()
 		self._report_handler.join()
 

@@ -69,7 +69,8 @@ def main():
 		request_handler.start()
 
 		timer_event = Event()
-		alert_handler = AlertHandler(config_params["queue_size"], stop_event, timer_event, config_params["time_alert"],)
+		alert_handler = AlertHandler(config_params["queue_size"], stop_event, 
+			timer_event, config_params["time_alert"], config_params["n_workers"])
 		alert_handler.start()
 
 	except KeyboardInterrupt:
