@@ -20,17 +20,22 @@ class RequestHandler(Thread):
 		self._client_handlers = [Thread(target=self.__handle_client_connection) for i in range(n_workers)]
 
 		self._queue_reports = Queue(maxsize=queue_size)
-		self._queue_querys = Queue(maxsize=queue_size)
-
 		self._report_handler = ReportHandler(self._queue_reports, self._stop_event)
-		self._query_handler = QueryHandler(self._queue_querys, self._stop_event)
+
+		self._queue_querys = Queue(maxsize=queue_size)
+		self._query_handlers = [QueryHandler(self._queue_querys, self._stop_event) for i in range(n_workers)]
+
+	def __start_threads(self):
 		self._report_handler.start()
-		self._query_handler.start()
 
+		for w in self._query_handlers:
+			w.start()
 
-	def run(self):
 		for client in self._client_handlers:
 			client.start()
+
+	def run(self):
+		self.__start_threads()
 
 		while not self._stop_event.is_set():
 			try:
@@ -59,16 +64,16 @@ class RequestHandler(Thread):
 	def __handle_client_request(self, client_socket):
 		recv = client_socket.recv_message()
 		mode = recv["mode"]
-		logging.info(f"[REQUEST_HANDLER] Recv mode: {mode}")
+		logging.debug(f"[REQUEST_HANDLER] Recv mode: {mode}")
 
 		if mode == MODE_REPORT:
-			logging.info(f"[REQUEST_HANDLER] Data: {recv['data']}")
+			logging.debug(f"[REQUEST_HANDLER] Data: {recv['data']}")
 			status_code = self.__add_report(recv["data"])
 			self.__send_client_response(client_socket, status_code, recv["data"])
 			client_socket.close_connection()
 
 		elif mode == MODE_AGG:
-			logging.info(f"[REQUEST_HANDLER] Data: {recv['data']}")
+			logging.debug(f"[REQUEST_HANDLER] Data: {recv['data']}")
 			status_code = self.__add_query(client_socket, recv["data"])
 			self.__send_client_response(client_socket, status_code, recv["data"])
 	
@@ -81,7 +86,7 @@ class RequestHandler(Thread):
 	def __add_report(self, metric):
 		if not self._queue_reports.full():
 			if ReportMetric(metric).is_valid():
-				logging.debug(f"[REQUEST_HANDLER] Add new metric to queue ")
+				#logging.debug(f"[REQUEST_HANDLER] Add new metric to queue ")
 				self._queue_reports.put(metric)
 				return SUCCESS_STATUS_CODE
 			else:
@@ -121,7 +126,7 @@ class RequestHandler(Thread):
 	def __close_all(self):
 		logging.info("[REQUEST_HANDLER] Close all connections")
 		self._queue_clients.join()
-		
+
 		for c in self._client_handlers:
 			c.join()
 

@@ -1,5 +1,6 @@
 server/__pycache__/
+server/messages/__pycache__/
 client/__pycache__/
 common/__pycache__/
-alerts/__pycache__/*
-data/metric_data*
+server/alerts/__pycache__/*
+server/data/metric_data*
