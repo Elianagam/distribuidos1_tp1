@@ -27,8 +27,8 @@ class MetricFileHandler:
 		try:
 			sdate = datetime.strptime(metric_data["datetime"], DATETIME_FORMAT).strftime(FILEDATE_FORMAT) 
 			mid = metric_data['metric_id']
-			#logging.debug(f"[METRIC_FILE_HANDLER] Write file {METRIC_DATA_FILENAME.format(metric_data['metric_id'])}")
-			with open(METRIC_DATA_FILENAME.format(mid, sdate), "a") as file:
+			filename = METRIC_DATA_FILENAME.format(mid, sdate)
+			with open(filename, "a") as file:
 				writer = csv.DictWriter(file, fieldnames=self.FIELDNAMES)
 				writer.writerow(metric_data)
 
@@ -38,13 +38,14 @@ class MetricFileHandler:
 
 	def aggregate(self, agg_req):
 		self._lock.acquire()
-		#logging.info(f"[FILE HANDLER] Read data metric {agg_req['metric_id']}")
-		dates_between = self.__dates_between(agg_req["to_date"], agg_req["from_date"])
-		all_data = []
+		
 		try:
+			dates_between = self.__dates_between(agg_req["to_date"], agg_req["from_date"])
+			all_data = []
 			for sdate in dates_between:
-				if (self.__exists(agg_req['metric_id'], sdate)):
-					with open(METRIC_DATA_FILENAME.format(agg_req['metric_id'], sdate), "r") as _file:
+				filename = METRIC_DATA_FILENAME.format(agg_req['metric_id'], sdate)
+				if exists(filename):
+					with open(filename, "r") as _file:
 						rows = csv.DictReader(_file, fieldnames=self.FIELDNAMES)
 						for data in rows:
 							all_data.append(data)
@@ -54,6 +55,7 @@ class MetricFileHandler:
 		
 		except Exception as e:
 			log.error(f"[AGGREGATE_FILE] Error: {e}")
+
 		finally:
 			self._lock.release()
 
@@ -64,8 +66,9 @@ class MetricFileHandler:
 		all_data = []
 		try:
 			for sdate in dates_between:
-				if (self.__exists(limit_req['metric_id'], sdate)):
-					with open(METRIC_DATA_FILENAME.format(limit_req['metric_id'], sdate), "r") as _file:
+				filename = METRIC_DATA_FILENAME.format(limit_req['metric_id'], sdate)
+				if exists(filename):
+					with open(filename, "r") as _file:
 						rows = csv.DictReader(_file, fieldnames=self.FIELDNAMES)
 						for data in rows:
 							all_data.append(data)
@@ -79,6 +82,7 @@ class MetricFileHandler:
 
 		except Exception as e:
 			log.error(f"[CHECK_LIMIT_FILE] Error: {e}")
+
 		finally:
 			self._lock.release()
 
