@@ -28,7 +28,7 @@ class Socket():
 			self._socket.sendall(len_msg)
 			self._socket.sendall(message.encode())
 		except:
-			raise RuntimeError("[SOCKET] Connection failed while sending")
+			raise RuntimeError("[SOCKET] Connection failed while send")
 
 
 	def recv_message(self, buffer_size=1024):
@@ -37,7 +37,6 @@ class Socket():
 			int_bytes = self.__recvall(2)
 			data_size = int_from_bytes(int_bytes)
 			recv = self.__recvall(data_size)
-			#recv = self._socket.recv(buffer_size)
 			msg = json.loads(recv.decode())
 			return msg
 		except OSError:
@@ -75,7 +74,7 @@ class Socket():
 		while bytes_recvd < data_size:
 			b_recv = self._socket.recv(data_size - bytes_recvd)
 			if not b_recv:
-				msg = "[SOCKET] Connection failed while receiving"
+				msg = "[SOCKET] Connection failed while recv"
 				logging.error(msg)
 				raise RuntimeError(msg)
 			bytes_recvd += len(b_recv)
