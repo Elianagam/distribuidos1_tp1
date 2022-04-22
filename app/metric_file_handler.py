@@ -18,16 +18,11 @@ class MetricFileHandler:
 		self._lock = Lock()
 
 
-	def __exists(self, metric_id, sdate):
-		return exists(METRIC_DATA_FILENAME.format(metric_id, sdate))
-
-
 	def write(self, metric_data):
 		self._lock.acquire()
 		try:
 			sdate = datetime.strptime(metric_data["datetime"], DATETIME_FORMAT).strftime(FILEDATE_FORMAT) 
-			mid = metric_data['metric_id']
-			filename = METRIC_DATA_FILENAME.format(mid, sdate)
+			filename = METRIC_DATA_FILENAME.format(metric_data['metric_id'], sdate)
 			with open(filename, "a") as file:
 				writer = csv.DictWriter(file, fieldnames=self.FIELDNAMES)
 				writer.writerow(metric_data)

@@ -1,9 +1,9 @@
 version: '3'
 services:
-	server:
-	    container_name: server
-	    image: server:latest
-	    entrypoint: python3 /main_server.py
+	app:
+	    container_name: app
+	    image: app:latest
+	    entrypoint: python3 /app/main.py
 	    environment:
 	      - SERVER_PORT=12345
 	      - SERVER_LISTEN_BACKLOG=5

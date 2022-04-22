@@ -34,7 +34,7 @@ class Socket():
 	def recv_message(self, buffer_size=1024):
 		try:
 			# First recv len in byts
-			int_bytes = self.__recvall(2)
+			int_bytes = self.__recvall(4)
 			data_size = int_from_bytes(int_bytes)
 			recv = self.__recvall(data_size)
 			msg = json.loads(recv.decode())
