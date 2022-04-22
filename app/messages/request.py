@@ -1,5 +1,5 @@
-from datetime import datetime
 from common.constants import DATETIME_FORMAT
+from datetime import datetime
 
 
 class Request:

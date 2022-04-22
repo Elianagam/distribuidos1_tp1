@@ -5,7 +5,7 @@ class Response:
 		self.status = status
 		self.msg = msg
 
-	# TODO: Replace for fctory
+	# TODO: Replace for factory
 
 	def serialize(self):
 		return json.dumps(self.__dict__)

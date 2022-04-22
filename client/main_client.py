@@ -65,7 +65,7 @@ def main():
         client.run(metric)
     
     elif config_params["mode"] == "aggregation":
-        query = {"metric_id": "5",
+        query = {"metric_id": "2",
                     "from_date":"2022-04-21 21:10:00",
                     "to_date":"2022-04-21 21:16:00",
                     "aggregation":"SUM",

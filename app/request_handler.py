@@ -1,12 +1,14 @@
-from threading import Thread
 import logging
-from queue import Queue, Empty
-from report_handler import ReportHandler
-from query_handler import QueryHandler
-from common.socket import Socket
+
 from common.constants import *
+from common.socket import Socket
 from messages.request import *
 from messages.response import *
+from query_handler import QueryHandler
+from queue import Empty
+from queue import Queue
+from report_handler import ReportHandler
+from threading import Thread
 
 
 class RequestHandler(Thread):
@@ -51,6 +53,11 @@ class RequestHandler(Thread):
 			except OSError as e:
 				logging.info(f"[REQUEST_HANDLER] Error operating with socket: {e}")
 
+			except Exception:
+				logging.info(f"[REQUEST_HANDLER] CLOSEE")
+				self.__close_all()
+
+		print("EVENT IS SET")
 		self.__close_all()
 
 	def __handle_responses(self):
@@ -61,6 +68,8 @@ class RequestHandler(Thread):
 				client_socket.send_message(response["response"])
 			
 			except Empty:
+				if self._stop_event.is_set():
+					return
 				continue
 
 			except OSError as e:
@@ -74,6 +83,8 @@ class RequestHandler(Thread):
 				self.__handle_client_request(client_socket)
 			
 			except Empty:
+				if self._stop_event.is_set():
+					return
 				continue
 
 			except OSError as e:
@@ -144,16 +155,22 @@ class RequestHandler(Thread):
 
 	def __close_all(self):
 		logging.info("[REQUEST_HANDLER] Close all connections")
-		self._queue_clients.join()
+		self._queue_clients.close()
+		self._queue_reports.close()
+		self._queue_querys.close()
+		self._queue_reponses.close()
 
-		for c in self._client_handlers:
-			c.join()
+		self._response_handler.join()
 
-		self._queue_reports.join()
-		self._report_handler.join()
+		for w in self._query_handlers:
+			w.join()
 
-		self._queue_querys.join()
-		self._query_handler.join()
+		for x in self._report_handler:
+			x.join()
+
+		for client in self._client_handlers:
+			client.join()
 
 		self._socket.close_connection()
+
 

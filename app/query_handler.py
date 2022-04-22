@@ -1,9 +1,12 @@
-from threading import Thread
 import logging
-from messages.response import SuccessAggregation, MetricIdNotFound
-from metric_file_handler import MetricFileHandler
-from queue import Queue, Empty
+
 from common.constants import TIMEOUT_WAITING_MESSAGE
+from messages.response import MetricIdNotFound
+from messages.response import SuccessAggregation
+from metric_file_handler import MetricFileHandler
+from queue import Empty
+from queue import Queue
+from threading import Thread
 
 
 class QueryHandler(Thread):
@@ -38,6 +41,8 @@ class QueryHandler(Thread):
 				self._queue_querys.task_done()
 
 			except Empty:
+				if self._stop_event.is_set():
+					return
 				continue
 			except Exception as e:
 				logging.error(f"[QUERY_HANDLER] Error {e}")
