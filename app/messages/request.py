@@ -1,5 +1,5 @@
+from common.constants import DATETIME_FORMAT
 from datetime import datetime
-from common.constants import DATE_FORMAT
 
 
 class Request:
@@ -32,8 +32,8 @@ class AggregationQuery(Request):
 				and (type(self.aggregation_window_secs) is float)
 
 			# Checkea si el formato fecha es correcto
-			from_date = datetime.strptime(self.from_date, DATE_FORMAT)
-			to_date = datetime.strptime(self.to_date, DATE_FORMAT)
+			from_date = datetime.strptime(self.from_date, DATETIME_FORMAT)
+			to_date = datetime.strptime(self.to_date, DATETIME_FORMAT)
 			return check_data and True
 		except:
 			logging.error(f"[AGGREGATION QUERY] Error en el formato de las fechas")

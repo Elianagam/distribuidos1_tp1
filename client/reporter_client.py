@@ -4,7 +4,7 @@ from datetime import datetime
 from common.constants import SUCCESS_STATUS_CODE, MODE_REPORT
 from common.socket import Socket
 
-class Reporter:
+class ReporterClient:
     def __init__(self, host, port):
         self._socket = Socket(host, port)
         self._socket.connect()

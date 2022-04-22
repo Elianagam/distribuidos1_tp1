@@ -1,6 +1,7 @@
 import socket
 import logging
 import json
+from common.utils import *
 
 class Socket():
 	def __init__(self, host, port, conn=None):
@@ -21,17 +22,25 @@ class Socket():
 		logging.info(f"[SOCKET] Close from ({self._host}, {self._port})")
 
 
-	def send_message(self, response):
-		self._socket.send(response.encode())
+	def send_message(self, message):
+		try:
+			len_msg = int_to_bytes(len(message))
+			self._socket.sendall(len_msg)
+			self._socket.sendall(message.encode())
+		except:
+			raise RuntimeError("[SOCKET] Connection failed while send")
 
 
 	def recv_message(self, buffer_size=1024):
 		try:
-			recv = self._socket.recv(buffer_size)
+			# First recv len in byts
+			int_bytes = self.__recvall(2)
+			data_size = int_from_bytes(int_bytes)
+			recv = self.__recvall(data_size)
 			msg = json.loads(recv.decode())
 			return msg
 		except OSError:
-		    logging.info("[SOCKET] Error while reading socket {}".format(client_sock))
+			logging.info("[SOCKET] Error while reading socket {}".format(client_sock))
 		return None
 
 
@@ -59,3 +68,15 @@ class Socket():
 		self._socket.connect((self._host, self._port))
 
 
+	def __recvall(self, data_size):
+		recvd = bytearray()
+		bytes_recvd = 0
+		while bytes_recvd < data_size:
+			b_recv = self._socket.recv(data_size - bytes_recvd)
+			if not b_recv:
+				msg = "[SOCKET] Connection failed while recv"
+				logging.error(msg)
+				raise RuntimeError(msg)
+			bytes_recvd += len(b_recv)
+			recvd.extend(b_recv)
+		return recvd

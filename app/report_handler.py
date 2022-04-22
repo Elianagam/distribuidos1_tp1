@@ -1,8 +1,10 @@
-from threading import Thread
 import logging
-from metric_file_handler import MetricFileHandler
-from queue import Queue, Empty
+
 from common.constants import TIMEOUT_WAITING_MESSAGE
+from metric_file_handler import MetricFileHandler
+from queue import Empty
+from queue import Queue
+from threading import Thread
 
 
 class ReportHandler(Thread):
@@ -21,8 +23,10 @@ class ReportHandler(Thread):
 				self._metrics_file.write(metric)
 				logging.info(f"[REPORT_HANDLER] Metric saved: {metric}")
 			except Empty:
+				if self._stop_event.is_set():
+					return
 				continue
 			except Exception as e:
 				logging.error(f"[QUERY_HANDLER] Error {e}")
 
-		self._queue_reports.join()
+		#self._queue_reports.join()

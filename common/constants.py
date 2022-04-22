@@ -1,4 +1,6 @@
-DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
+DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
+
+FILEDATE_FORMAT = "%Y-%m-%d_%H-%M"
 
 MODE_REPORT = "report"
 
@@ -14,8 +16,8 @@ SERVER_ERROR = 500
 
 TIMEOUT_WAITING_MESSAGE = 1
 
-METRIC_DATA_FILENAME = "./server/data/metric_data_{}.csv"
+METRIC_DATA_FILENAME = "./app/data/metric_data_{}_{}.csv"
 
 TIME_ALERT = 60 # 60 seg, 1 min
 
-CONFIG_ALERT_FILENAME = "./server/data/config_alerts.csv" 
+CONFIG_ALERT_FILENAME = "./app/data/config_alerts.csv" 

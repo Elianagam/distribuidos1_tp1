@@ -1,9 +1,11 @@
-import os
 import logging
+import signal
+import os
+
+from alerts.alert_handler import AlertHandler
 from configparser import ConfigParser
 from request_handler import RequestHandler
 from threading import Event
-from alerts.alert_handler import AlertHandler
 
 
 
@@ -34,7 +36,7 @@ def initialize_config():
 
 	config = ConfigParser(os.environ)
 	# If config.ini does not exists original config object is not modified
-	config.read("server/config.ini")
+	config.read("app/config.ini")
 
 	config_params = {}
 	try:
@@ -52,6 +54,10 @@ def initialize_config():
 
 	return config_params
 
+def stop_event_handler(stop_event):
+	logging.info("---- Close after SIGTERM signal...")
+	stop_event.set()
+
 
 def main():
 	try:
@@ -62,8 +68,10 @@ def main():
 		# of the component
 		logging.debug("Server configuration: {}".format(config_params))
 
-		# Initialize server and start server loop
 		stop_event = Event()
+		signal.signal(signal.SIGTERM, lambda signal, frame: stop_event_handler(stop_event))
+
+		# Initialize server and start server loop
 		request_handler = RequestHandler(config_params["port"], config_params["listen_backlog"], 
 			config_params["queue_size"], stop_event, config_params["n_workers"])
 		request_handler.start()
@@ -73,9 +81,11 @@ def main():
 			timer_event, config_params["time_alert"], config_params["n_workers"])
 		alert_handler.start()
 
-	except KeyboardInterrupt:
+	except (KeyboardInterrupt, SystemExit):
 		logging.info(f"[MAIN_SERVER] Stop event is set")
-		stop_event.set()
+		#stop_event.set()
+		request_handler.join()
+		alert_handler.join()
 
 
 if __name__ == "__main__":

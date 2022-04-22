@@ -1,10 +1,15 @@
-from threading import Thread
-import logging
-from queue import Queue, Empty
-from common.constants import CONFIG_ALERT_FILENAME, TIMEOUT_WAITING_MESSAGE, DATE_FORMAT
-from alerts.check_limit_handler import CheckLimitHandler
 import csv
-from datetime import datetime, timedelta
+import logging
+
+from alerts.check_limit_handler import CheckLimitHandler
+from common.constants import CONFIG_ALERT_FILENAME
+from common.constants import DATETIME_FORMAT
+from common.constants import TIMEOUT_WAITING_MESSAGE
+from datetime import datetime
+from datetime import timedelta
+from queue import Empty
+from queue import Queue
+from threading import Thread
 
 
 
@@ -58,8 +63,8 @@ class AlertHandler(Thread):
 
 	def __add_alerts_datetime(self, alert):
 		now = datetime.now()
-		alert["from_date"] = (now - timedelta(seconds=self._time_alert)).strftime(DATE_FORMAT)
-		alert["to_date"] = now.strftime(DATE_FORMAT)
+		alert["from_date"] = (now - timedelta(seconds=self._time_alert)).strftime(DATETIME_FORMAT)
+		alert["to_date"] = now.strftime(DATETIME_FORMAT)
 		return alert
 
 	def __log_alerts(self):
