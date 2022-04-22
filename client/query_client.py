@@ -3,7 +3,7 @@ import logging
 from common.constants import SUCCESS_STATUS_CODE, MODE_AGG
 from common.socket import Socket
 
-class AggregationQuery:
+class QueryClient:
     def __init__(self, host, port):
         self._socket = Socket(host, port)
         self._socket.connect()

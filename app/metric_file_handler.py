@@ -3,7 +3,7 @@ import csv
 from datetime import datetime, timedelta
 from os.path import exists
 import logging
-from common.constants import DATE_FORMAT, METRIC_DATA_FILENAME
+from common.constants import DATETIME_FORMAT, FILEDATE_FORMAT, METRIC_DATA_FILENAME
 
 
 class MetricFileHandler:
@@ -14,15 +14,17 @@ class MetricFileHandler:
 		self._lock = Lock()
 
 
-	def exists(self, metric_id):
-		return exists(METRIC_DATA_FILENAME.format(metric_id))
+	def __exists(self, metric_id, sdate):
+		return exists(METRIC_DATA_FILENAME.format(metric_id, sdate))
 
 
 	def write(self, metric_data):
 		self._lock.acquire()
 		try:
+			sdate = self.__datetime_to_date(metric_data["datetime"])
+			mid = metric_data['metric_id']
 			#logging.debug(f"[METRIC_FILE_HANDLER] Write file {METRIC_DATA_FILENAME.format(metric_data['metric_id'])}")
-			with open(METRIC_DATA_FILENAME.format(metric_data['metric_id']), "a") as file:
+			with open(METRIC_DATA_FILENAME.format(mid, sdate), "a") as file:
 				writer = csv.DictWriter(file, fieldnames=self.FIELDNAMES)
 				writer.writerow(metric_data)
 
@@ -30,13 +32,37 @@ class MetricFileHandler:
 			self._lock.release()
 
 
+	def __dates_between(self, to_date, from_date):
+		if type(from_date) == str:
+			from_date = self.__string_to_date(from_date)
+			to_date = self.__string_to_date(to_date)
+
+		delta = to_date - from_date   # returns timedelta
+		minutes = divmod(delta.seconds, 60)[0]
+
+		dates_between = []		
+		for i in range(minutes + 1):
+			dmin = from_date + timedelta(minutes=i)
+			dates_between.append( dmin.strftime(FILEDATE_FORMAT) )
+
+		return dates_between
+
+
 	def aggregate(self, agg_req):
 		self._lock.acquire()
 		#logging.info(f"[FILE HANDLER] Read data metric {agg_req['metric_id']}")
+		dates_between = self.__dates_between(agg_req["to_date"], agg_req["from_date"])
+		all_data = []
 		try:
-			with open(METRIC_DATA_FILENAME.format(agg_req['metric_id']), "r") as _file:
-				rows = csv.DictReader(_file, fieldnames=self.FIELDNAMES)
-				return self.__split_data(agg_req, rows)
+			for sdate in dates_between:
+				if (self.__exists(agg_req['metric_id'], sdate)):
+					with open(METRIC_DATA_FILENAME.format(agg_req['metric_id'], sdate), "r") as _file:
+						rows = csv.DictReader(_file, fieldnames=self.FIELDNAMES)
+						for data in rows:
+							all_data.append(data)
+
+			if (all_data == []): return "Empty data"
+			return self.__split_data(agg_req, all_data)
 
 		finally:
 			self._lock.release()
@@ -44,22 +70,32 @@ class MetricFileHandler:
 
 	def check_limit(self, limit_req):
 		self._lock.acquire()
+		dates_between = self.__dates_between(limit_req["to_date"], limit_req["from_date"])
+		all_data = []
 		try:
-			with open(METRIC_DATA_FILENAME.format(limit_req['metric_id']), "r") as _file:
-				rows = csv.DictReader(_file, fieldnames=self.FIELDNAMES)
+			for sdate in dates_between:
+				if (self.__exists(limit_req['metric_id'], sdate)):
+					with open(METRIC_DATA_FILENAME.format(limit_req['metric_id'], sdate), "r") as _file:
+						rows = csv.DictReader(_file, fieldnames=self.FIELDNAMES)
+						for data in rows:
+							all_data.append(data)
 				
-				agg_data = self.__split_data(limit_req, rows)
-				limit_exceded = self.__is_exceded(agg_data, limit_req["limit"])
+			agg_data = self.__split_data(limit_req, all_data)
+			limit_exceded = self.__is_exceded(agg_data, limit_req["limit"])
 				
-				if limit_exceded:
-					agg = {"limit_exceded": agg_data, "alert": limit_req} #self.__agg_metrics_by_limit(agg_req, rows)
-					return agg
-				return None
+			if limit_exceded:
+				agg = {"limit_exceded": agg_data, "alert": limit_req}
+				return agg
+			return None
 
 		finally:
 			self._lock.release()
 
 	
+	def __datetime_to_date(self, sdate):
+		return datetime.strptime(sdate, DATETIME_FORMAT).strftime(FILEDATE_FORMAT)
+
+
 	def __is_exceded(self, result, limit):
 		if result == None or result == []: return False
 
@@ -71,7 +107,7 @@ class MetricFileHandler:
 			return False
 
 		# Si no es por ventanas es una lista de un unico elemento
-		return result> float(limit)
+		return result > float(limit)
 		
 
 	def __split_data(self, agg_req, metrics):
@@ -114,7 +150,7 @@ class MetricFileHandler:
 
 
 	def __string_to_date(self, sdate):
-		return datetime.strptime(sdate, DATE_FORMAT)
+		return datetime.strptime(sdate, DATETIME_FORMAT)
 
 
 	def __start_end_window(self, sdate, w_size):

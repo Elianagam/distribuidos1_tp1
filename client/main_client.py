@@ -1,8 +1,8 @@
 import os
 import logging
 from configparser import ConfigParser
-from reporter import Reporter
-from aggregation_query import AggregationQuery
+from reporter_client import ReporterClient
+from query_client import QueryClient
 
 
 def initialize_log(logging_level):
@@ -60,18 +60,18 @@ def main():
 
     # Initialize server and start server loop
     if config_params["mode"] == "report":
-        client = Reporter(config_params["host"], config_params["port"])
+        client = ReporterClient(config_params["host"], config_params["port"])
         metric = {"metric_id": "5", "value": 4.0}
         client.run(metric)
     
     elif config_params["mode"] == "aggregation":
-        query = {"metric_id": "2",
-                    "from_date":"2022-04-11 00:00:00",
-                    "to_date":"2022-04-14 00:00:00",
+        query = {"metric_id": "5",
+                    "from_date":"2022-04-21 21:10:00",
+                    "to_date":"2022-04-21 21:16:00",
                     "aggregation":"SUM",
-                    "aggregation_window_secs":3.0
+                    "aggregation_window_secs":60.0
                     }
-        client = AggregationQuery(config_params["host"], config_params["port"])
+        client = QueryClient(config_params["host"], config_params["port"])
         client.run(query)
 
     else:

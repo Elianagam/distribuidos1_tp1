@@ -16,20 +16,26 @@ class RequestHandler(Thread):
 		self._socket.bind_and_listen(listen_backlog)
 		self._stop_event = stop_event
 
+		self._queue_reponses = Queue()
+		self._response_handler = Thread(target=self.__handle_responses)
+
 		self._queue_clients = Queue()
 		self._client_handlers = [Thread(target=self.__handle_client_connection) for i in range(n_workers)]
 
 		self._queue_reports = Queue(maxsize=queue_size)
-		self._report_handler = ReportHandler(self._queue_reports, self._stop_event)
+		self._report_handler = [ReportHandler(self._queue_reports, self._stop_event) for i in range(n_workers)]
 
 		self._queue_querys = Queue(maxsize=queue_size)
-		self._query_handlers = [QueryHandler(self._queue_querys, self._stop_event) for i in range(n_workers)]
+		self._query_handlers = [QueryHandler(self._queue_querys, self._queue_reponses, self._stop_event) for i in range(n_workers)]
 
 	def __start_threads(self):
-		self._report_handler.start()
+		self._response_handler.start()
 
 		for w in self._query_handlers:
 			w.start()
+
+		for x in self._report_handler:
+			x.start()
 
 		for client in self._client_handlers:
 			client.start()
@@ -46,6 +52,19 @@ class RequestHandler(Thread):
 				logging.info(f"[REQUEST_HANDLER] Error operating with socket: {e}")
 
 		self.__close_all()
+
+	def __handle_responses(self):
+		while not self._stop_event.is_set():
+			try:
+				response = self._queue_reponses.get(timeout=TIMEOUT_WAITING_MESSAGE)
+				client_socket = Socket('', '', response["socket"])
+				client_socket.send_message(response["response"])
+			
+			except Empty:
+				continue
+
+			except OSError as e:
+				logging.info(f"[RESPONSE_HANDLER] Error operating with socket: {e}")
 
 
 	def __handle_client_connection(self):
@@ -98,7 +117,7 @@ class RequestHandler(Thread):
 		if not self._queue_querys.full():
 			if AggregationQuery(query).is_valid():
 				#logging.debug(f"[REQUEST_HANDLER] Add new query to queue")
-				self._queue_querys.put({"query": query, "socket": client_socket})
+				self._queue_querys.put({"query": query, "socket": client_socket._socket})
 				return SUCCESS_STATUS_CODE
 			else:
 				return CLIENT_AGG_ERROR
