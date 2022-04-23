@@ -34,7 +34,7 @@ def initialize_config():
 
     config = ConfigParser(os.environ)
     # If config.ini does not exists original config object is not modified
-    config.read("client/config.ini")
+    config.read("config.ini")
 
     config_params = {}
     try:
@@ -54,7 +54,7 @@ def initialize_config():
 
 
 
-def send_multiples_reports():
+def send_multiples_reports(config_params):
     metrics = list(range(1,6))
     clients = []
 
@@ -62,7 +62,7 @@ def send_multiples_reports():
         time.sleep(2)
         metric_id = random.choice(metrics)
         value = float(random.randint(0, 50))
-        metric = {"metric_id": metric_id, "value": value}
+        metric = {"metric_id": str(metric_id), "value": value}
         
         client = ReporterClient(config_params["host"], config_params["port"]) 
         clients.append(client)
@@ -72,7 +72,7 @@ def send_multiples_reports():
         c.join()
 
 
-def send_multiples_querys():
+def send_multiples_querys(config_params):
     metrics = list(range(1,6))
     windows = list(range(0,100, 10))
     aggregation = ["SUM", "MAX", "MIN", "COUNT"]
@@ -85,7 +85,7 @@ def send_multiples_querys():
         agg_op = random.choice(aggregation)
         win_sec = float(random.choice(windows))
 
-        query = {"metric_id": metric_id,
+        query = {"metric_id": str(metric_id),
                     "from_date":"2022-04-21 19:10:00",
                     "to_date":"2022-04-23 00:00:00",
                     "aggregation": agg_op,
@@ -107,11 +107,8 @@ def main():
     logging.debug("Client configuration: {}".format(config_params))
 
     # Initialize server and start server loop
-    send_multiples_reports()
-    send_multiples_querys()
-
-    else:
-        logging.error("[MAIN_CLIENT] Invalid mode")
+    send_multiples_reports(config_params)
+    send_multiples_querys(config_params)
 
 
 

@@ -18,4 +18,4 @@ TIMEOUT_WAITING_MESSAGE = 1
 
 TIME_ALERT = 60 # 60 seg, 1 min
 
-CONFIG_ALERT_FILENAME = "./app/data/config_alerts.csv" 
+CONFIG_ALERT_FILENAME = "./data/config_alerts.csv" 
