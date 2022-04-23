@@ -1,14 +1,17 @@
 import csv
 import logging
+import os
 
 from common.constants import DATETIME_FORMAT
 from common.constants import FILEDATE_FORMAT
-from common.constants import METRIC_DATA_FILENAME
 from datetime import datetime
 from datetime import timedelta
 from os.path import exists
 from threading import Lock
 
+METRIC_DATA_FILENAME = "data/metric_data_{}_{}.csv"
+
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 class MetricFileHandler:
 
@@ -38,7 +41,7 @@ class MetricFileHandler:
 			dates_between = self.__dates_between(agg_req["to_date"], agg_req["from_date"])
 			all_data = []
 			for sdate in dates_between:
-				filename = METRIC_DATA_FILENAME.format(agg_req['metric_id'], sdate)
+				filename = os.path.join(ROOT_DIR, METRIC_DATA_FILENAME.format(agg_req['metric_id'], sdate))
 				if exists(filename):
 					with open(filename, "r") as _file:
 						rows = csv.DictReader(_file, fieldnames=self.FIELDNAMES)
@@ -49,7 +52,7 @@ class MetricFileHandler:
 			return self.__split_data(agg_req, all_data)
 		
 		except Exception as e:
-			log.error(f"[AGGREGATE_FILE] Error: {e}")
+			logging.error(f"[AGGREGATE_FILE] Error: {e}")
 
 		finally:
 			self._lock.release()
@@ -61,7 +64,7 @@ class MetricFileHandler:
 		all_data = []
 		try:
 			for sdate in dates_between:
-				filename = METRIC_DATA_FILENAME.format(limit_req['metric_id'], sdate)
+				filename = os.path.join(ROOT_DIR, METRIC_DATA_FILENAME.format(limit_req['metric_id'], sdate))
 				if exists(filename):
 					with open(filename, "r") as _file:
 						rows = csv.DictReader(_file, fieldnames=self.FIELDNAMES)
@@ -76,24 +79,31 @@ class MetricFileHandler:
 			return None
 
 		except Exception as e:
-			log.error(f"[CHECK_LIMIT_FILE] Error: {e}")
+			logging.error(f"[CHECK_LIMIT_FILE] Error: {e}")
 
 		finally:
 			self._lock.release()
 
 
 	def __is_exceded(self, result, limit):
-		if result == None or result == []: return False
+		try:
+			if result == None or result == []: return False
 
-		if type(result) == list and len(result) > 1:
-			for windows in result:
-				for value in windows:
-					if float(value) > float(limit):
-						return True
-			return False
+			if type(result) == list:
+				for windows in result:
+					#if type(windows) == list:
+#						for value in windows:
+#							if float(value) > float(limit):
+#								return True
+#					else:
+						if float(windows) > float(limit):
+							return True
+				return False
 
-		# Si no es por ventanas es una lista de un unico elemento
-		return result > float(limit)
+			# Si no es por ventanas es una lista de un unico elemento
+			return result > float(limit)
+		except Exception as e:
+			logging.error(f"[IS EXCEDED] Error in check exceded {e}")
 		
 
 	def __split_data(self, agg_req, metrics):
@@ -106,6 +116,7 @@ class MetricFileHandler:
 					agg_data.append( (float(row["value"]), row["datetime"]) )
 				else:
 					agg_data.append(float(row["value"]))
+
 		if by_window:
 			return self.__aggregation_by_window(agg_req["aggregation_window_secs"], agg_req["aggregation"], agg_data)
 		else:
@@ -116,9 +127,15 @@ class MetricFileHandler:
 	def __aggregation_by_window(self, w_size, op, metrics):
 		# metrics: tuple (value, date)
 		try:
+			agg_result = []
+			if (metrics == []): 
+				logging.debug(f"[AGG_BY_WINDOW] Empty data")
+				return agg_result
+
 			start, end = self.__start_end_window(metrics[0][1], w_size)
 			split_by_window = [ [metrics[0][0]] ]
-			
+
+						
 			for value,sdate in metrics[1:]:
 				m_date = sdate#self.__string_to_date(sdate)
 				if self.__is_between_date(start, end, m_date):
@@ -130,7 +147,6 @@ class MetricFileHandler:
 					# append a new window_bucket
 					split_by_window.append( [value] )
 
-			agg_result = []
 			for bucket in split_by_window:
 				agg_result.append(self.__apply_aggregation(op, bucket))
 			
@@ -141,19 +157,21 @@ class MetricFileHandler:
 
 
 	def __dates_between(self, to_date, from_date):
-		if type(from_date) == str:
-			from_date = self.__string_to_date(from_date)
-			to_date = self.__string_to_date(to_date)
+		try:
+			if type(from_date) == str:
+				from_date = self.__string_to_date(from_date)
+				to_date = self.__string_to_date(to_date)
 
-		delta = to_date - from_date   # returns timedelta
-		minutes = divmod(delta.seconds, 60)[0]
+			delta = to_date - from_date   # returns timedelta
+			minutes = divmod(delta.seconds, 60)[0]
+			dates_between = []		
+			for i in range(minutes + 1):
+				dmin = from_date + timedelta(minutes=i)
+				dates_between.append( dmin.strftime(FILEDATE_FORMAT) )
 
-		dates_between = []		
-		for i in range(minutes + 1):
-			dmin = from_date + timedelta(minutes=i)
-			dates_between.append( dmin.strftime(FILEDATE_FORMAT) )
-
-		return dates_between
+			return dates_between
+		except Exception as e:
+			logging.error(f"[METRIC_FILE_HANDLER] Error getting dates between {e}")
 
 
 	def __apply_aggregation(self, op, metrics):
@@ -186,7 +204,7 @@ class MetricFileHandler:
 	def __start_end_window(self, sdate, w_size):
 		try:
 			start_win_date = self.__string_to_date(sdate)
-			end_win_date =  self.__string_to_date(sdate) + timedelta(seconds=w_size)
+			end_win_date =  start_win_date + timedelta(seconds=int(w_size))
 			return start_win_date, end_win_date
 		except Exception as e:
 			logging.error(f"[METRIC_FILE_HANDLER] Error in create window_bucket date: {e}")

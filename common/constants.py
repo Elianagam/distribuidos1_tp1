@@ -16,8 +16,6 @@ SERVER_ERROR = 500
 
 TIMEOUT_WAITING_MESSAGE = 1
 
-METRIC_DATA_FILENAME = "./app/data/metric_data_{}_{}.csv"
-
 TIME_ALERT = 60 # 60 seg, 1 min
 
 CONFIG_ALERT_FILENAME = "./app/data/config_alerts.csv" 

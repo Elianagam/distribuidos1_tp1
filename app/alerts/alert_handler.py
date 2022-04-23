@@ -63,7 +63,7 @@ class AlertHandler(Thread):
 
 	def __add_alerts_datetime(self, alert):
 		now = datetime.now()
-		alert["from_date"] = (now - timedelta(days=self._time_alert)).strftime(DATETIME_FORMAT)
+		alert["from_date"] = (now - timedelta(hours=self._time_alert)).strftime(DATETIME_FORMAT)
 		alert["to_date"] = now.strftime(DATETIME_FORMAT)
 		return alert
 

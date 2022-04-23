@@ -3,6 +3,8 @@ import logging
 from configparser import ConfigParser
 from reporter_client import ReporterClient
 from query_client import QueryClient
+import random
+import time
 
 
 def initialize_log(logging_level):
@@ -50,6 +52,52 @@ def initialize_config():
     return config_params
 
 
+
+
+def send_multiples_reports():
+    metrics = list(range(1,6))
+    clients = []
+
+    for i in range(50):
+        time.sleep(2)
+        metric_id = random.choice(metrics)
+        value = float(random.randint(0, 50))
+        metric = {"metric_id": metric_id, "value": value}
+        
+        client = ReporterClient(config_params["host"], config_params["port"]) 
+        clients.append(client)
+        client.run(metric)
+
+    for c in clients:
+        c.join()
+
+
+def send_multiples_querys():
+    metrics = list(range(1,6))
+    windows = list(range(0,100, 10))
+    aggregation = ["SUM", "MAX", "MIN", "COUNT"]
+
+    clients = []
+
+    for i in range(50):
+        time.sleep(2)
+        metric_id = random.choice(metrics)
+        agg_op = random.choice(aggregation)
+        win_sec = float(random.choice(windows))
+
+        query = {"metric_id": metric_id,
+                    "from_date":"2022-04-21 19:10:00",
+                    "to_date":"2022-04-23 00:00:00",
+                    "aggregation": agg_op,
+                    "aggregation_window_secs": win_sec
+                    }
+        client = QueryClient(config_params["host"], config_params["port"])
+        clients.append(client)
+        client.run(query)
+
+    for c in clients:
+        c.join()
+
 def main():
     config_params = initialize_config()
     initialize_log(config_params["logging_level"])
@@ -59,20 +107,8 @@ def main():
     logging.debug("Client configuration: {}".format(config_params))
 
     # Initialize server and start server loop
-    if config_params["mode"] == "report":
-        client = ReporterClient(config_params["host"], config_params["port"])
-        metric = {"metric_id": "2", "value": 4.0}
-        client.run(metric)
-    
-    elif config_params["mode"] == "aggregation":
-        query = {"metric_id": "2",
-                    "from_date":"2022-04-21 21:10:00",
-                    "to_date":"2022-04-21 21:16:00",
-                    "aggregation":"SUM",
-                    "aggregation_window_secs":60.0
-                    }
-        client = QueryClient(config_params["host"], config_params["port"])
-        client.run(query)
+    send_multiples_reports()
+    send_multiples_querys()
 
     else:
         logging.error("[MAIN_CLIENT] Invalid mode")

@@ -1,9 +1,9 @@
 import logging
 
-from app.metric_file_handler import MetricFileHandler
 from common.constants import TIMEOUT_WAITING_MESSAGE
 from queue import Empty
 from threading import Thread
+from metric_file_handler import MetricFileHandler
 
 
 

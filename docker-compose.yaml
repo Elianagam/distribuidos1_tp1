@@ -1,0 +1,24 @@
+version: '3'
+services:
+  app:
+    container_name: app
+    image: app:latest
+    entrypoint: python3 /main.py
+    environment:
+      - SERVER_PORT=12345
+      - SERVER_LISTEN_BACKLOG=5
+      - LOGGING_LEVEL=DEBUG
+      - QUEUE_SIZE=100
+      - N_WORKERS=5
+      - TIME_ALERT=60
+
+    networks:
+      - metrics_network
+
+
+networks:
+  metrics_network:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.25.125.0/24
