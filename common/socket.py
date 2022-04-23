@@ -19,7 +19,7 @@ class Socket():
 	def close_connection(self):
 		#self._socket.shutdown(socket.SHUT_RDWR)
 		self._socket.close()
-		logging.info(f"[SOCKET] Close from ({self._host}, {self._port})")
+		#logging.info(f"[SOCKET] Close from ({self._host}, {self._port})")
 
 
 	def send_message(self, message):
@@ -57,9 +57,9 @@ class Socket():
 		"""
 
 		# Connection arrived
-		logging.info("[SOCKET] Proceed to accept new connections")
+		#logging.info("[SOCKET] Proceed to accept new connections")
 		c, (client_host, client_port) = self._socket.accept()
-		logging.info(f"[SOCKET] Got connection from ({client_host}, {client_port})")
+		#logging.info(f"[SOCKET] Got connection from ({client_host}, {client_port})")
 		new_socket = Socket(client_host, client_port, c)
 		return new_socket
 

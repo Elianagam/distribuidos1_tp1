@@ -1,10 +1,12 @@
-import os
 import logging
-from configparser import ConfigParser
-from reporter_client import ReporterClient
-from query_client import QueryClient
+import os
 import random
 import time
+
+from configparser import ConfigParser
+from query_client import QueryClient
+from reporter_client import ReporterClient
+from threading import Thread
 
 
 def initialize_log(logging_level):
@@ -68,10 +70,6 @@ def send_multiples_reports(config_params):
         clients.append(client)
         client.run(metric)
 
-    for c in clients:
-        c.join()
-
-
 def send_multiples_querys(config_params):
     metrics = list(range(1,6))
     windows = list(range(0,100, 10))
@@ -87,16 +85,13 @@ def send_multiples_querys(config_params):
 
         query = {"metric_id": str(metric_id),
                     "from_date":"2022-04-21 19:10:00",
-                    "to_date":"2022-04-23 00:00:00",
+                    "to_date":"2022-04-24 00:00:00",
                     "aggregation": agg_op,
                     "aggregation_window_secs": win_sec
                     }
         client = QueryClient(config_params["host"], config_params["port"])
         clients.append(client)
         client.run(query)
-
-    for c in clients:
-        c.join()
 
 def main():
     config_params = initialize_config()
@@ -107,8 +102,14 @@ def main():
     logging.debug("Client configuration: {}".format(config_params))
 
     # Initialize server and start server loop
-    send_multiples_reports(config_params)
-    send_multiples_querys(config_params)
+    reports = Thread(target=send_multiples_reports, args=(config_params,))
+    querys = Thread(target=send_multiples_querys, args=(config_params,))
+
+    reports.start()
+    querys.start()
+
+    reports.join()
+    querys.join()
 
 
 

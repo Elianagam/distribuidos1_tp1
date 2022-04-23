@@ -11,9 +11,10 @@ services:
       - QUEUE_SIZE=100
       - N_WORKERS=5
       - TIME_ALERT=60
-
     networks:
       - metrics_network
+    volumes:
+      - ./app/data:/data/
 
 
 networks:

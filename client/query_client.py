@@ -17,7 +17,7 @@ class QueryClient:
         if (response['status'] == SUCCESS_STATUS_CODE):
             # Espera el resultado de la agregacion
             response = self._socket.recv_message()
-            logging.info(response)
+            logging.info(f"[QUERY] {response}")
 
         if (response['status'] != SUCCESS_STATUS_CODE):
             logging.error(response)
