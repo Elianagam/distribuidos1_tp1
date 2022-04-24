@@ -2,9 +2,9 @@ import fcntl
 import logging
 
 class Filelock:
-	def acquire(self, mode="r"):
+	def acquire(self, filename, mode="r"):
 		try:
-			file = open(filepath, mode)
+			file = open(filename, mode)
 			if mode == "r":
 				fcntl.lockf(file, fcntl.LOCK_SH)
 			elif mode in ["a", "w"]:
@@ -14,5 +14,5 @@ class Filelock:
 			logging.error(f"[FILELOCK] Error: {e}")
 
 
-	def release(self, lock):
-		fcntl.flock(lock, fcntl.LOCK_UN)
+	def release(self, lockfile):
+		fcntl.flock(lockfile, fcntl.LOCK_UN)

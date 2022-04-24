@@ -16,9 +16,9 @@ class ReporterClient:
         self._socket.send_message(json.dumps({"mode": self._mode,
             "data": ReportMetricMessage(metric["metric_id"], metric["value"]).__dict__
             }))
-        logging.info(f"[REPORTER] Metric to send: {metric}")
+        logging.info(f"[REPORTER CLIENT] Metric to send: {metric}")
         response = self._socket.recv_message()
-        logging.info(f"[REPORTER] {response}")
+        logging.info(f"[REPORTER CLIENT] {response}")
         
         
         self._socket.close_connection()
