@@ -1,9 +1,9 @@
 import logging
 
-from app.metric_file_handler import MetricFileHandler
 from common.constants import TIMEOUT_WAITING_MESSAGE
 from queue import Empty
 from threading import Thread
+from metric_file_handler import MetricFileHandler
 
 
 
@@ -19,6 +19,7 @@ class CheckLimitHandler(Thread):
 		while not self._stop_event.is_set():
 			try:
 				alert = self._queue_alert_to_check.get(timeout=TIMEOUT_WAITING_MESSAGE)
+				logging.debug(f"[CHECK_LIMIT_HANDLER] Ćheck limit for alert: {alert}")
 				self._queue_alert_to_check.task_done()
 				agg_alert = self._metrics_file.check_limit(alert)
 

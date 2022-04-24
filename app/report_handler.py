@@ -27,6 +27,6 @@ class ReportHandler(Thread):
 					return
 				continue
 			except Exception as e:
-				logging.error(f"[QUERY_HANDLER] Error {e}")
+				logging.error(f"[REPORT_HANDLER] Error {e}")
 
 		#self._queue_reports.join()

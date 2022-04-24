@@ -36,7 +36,6 @@ class QueryHandler(Thread):
 			try:
 				request = self._queue_querys.get(timeout=TIMEOUT_WAITING_MESSAGE)
 				logging.info(f"[QUERY_HANDLER] Recv Aggregation Query - {request['query']}")
-
 				self.__proccess_query(request["query"], request["socket"])
 				self._queue_querys.task_done()
 
