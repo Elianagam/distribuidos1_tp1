@@ -63,9 +63,8 @@ def send_multiples_reports(config_params):
     for i in range(2):
         metric_id = random.choice(metrics)
         value = float(random.randint(0, 50))
-        metric = {"metric_id": str(6), "value": value}
+        metric = {"metric_id": str(1), "value": value}
         
-        print(f"metric! {metric} ")
         client = ReporterClient(config_params["host"], config_params["port"]) 
         clients.append(client)
         client.run(metric)
@@ -80,19 +79,18 @@ def send_multiples_querys(config_params):
     clients = []
 
     for i in range(2):
-        time.sleep(10)
+        time.sleep(5)
         metric_id = random.choice(metrics)
         agg_op = random.choice(aggregation)
         win_sec = float(random.choice(windows))
 
-        query = {"metric_id": str(6),
-                    "from_date":"2022-04-23 22:40:00",
-                    "to_date":"2022-04-23 23:00:00",
+        query = {"metric_id": str(1),
+                    "from_date":"2022-04-24 09:46:00",
+                    "to_date":"2022-04-24 09:55:00",
                     "aggregation": agg_op,
                     "aggregation_window_secs": win_sec
                     }
 
-        print(f"Query! {query}")
         client = QueryClient(config_params["host"], config_params["port"])
         clients.append(client)
         client.run(query)

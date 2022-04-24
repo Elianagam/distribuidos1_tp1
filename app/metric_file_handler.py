@@ -18,52 +18,55 @@ class MetricFileHandler:
 
 	FIELDNAMES = ["metric_id", "value", "datetime"]
 
-	def __init__(self):
-		self._lock = Lock()#Filelock()
+	#def __init__(self):
+		#self._lock = Lock()
+
+
+	def __get_filename(self, data, sdate=None):
+		if sdate == None:
+			sdate = datetime.strptime(data["datetime"], DATETIME_FORMAT).strftime(FILEDATE_FORMAT) 
+
+		metric_filename = METRIC_DATA_FILENAME.format(data['metric_id'], sdate)
+		filename = f"{ROOT_DIR}{metric_filename}"
+		return filename
 
 
 	def write(self, metric_data):
-		self._lock.acquire()
 		try:
-			sdate = datetime.strptime(metric_data["datetime"], DATETIME_FORMAT).strftime(FILEDATE_FORMAT) 
+			#sdate = datetime.strptime(metric_data["datetime"], DATETIME_FORMAT).strftime(FILEDATE_FORMAT) 
 
-			metric_filename = METRIC_DATA_FILENAME.format(metric_data['metric_id'], sdate)
-			filename = f"{ROOT_DIR}{metric_filename}"
+			#metric_filename = METRIC_DATA_FILENAME.format(metric_data['metric_id'], sdate)
+			#filename = f"{ROOT_DIR}{metric_filename}"
+			filename = self.__get_filename(metric_data)
 
-			#logging.debug(f"[FILENAME WRITE] {filename} [EXIST?] {exists(filename)}")
+			filelock = Filelock()
+			_file = filelock.acquire(filename, "a")
+			logging.debug(F"----- ESCRIBIR ---- [FILENAME WRITE] {filename} [EXIST?] {exists(filename)}")
 
-			with open(filename, "a") as file:
-				logging.debug(F"----- ESCRIBIR ---- {filename}")
-				logging.debug(f"[FILENAME WRITE] {filename} [EXIST?] {exists(filename)}")
-
-				writer = csv.DictWriter(file, fieldnames=self.FIELDNAMES)
-				writer.writerow(metric_data)
+			writer = csv.DictWriter(_file, fieldnames=self.FIELDNAMES)
+			writer.writerow(metric_data)
+			filelock.release(_file)
 		except Exception as e:
 			logging.error(f"[WRITE FILE] Error: {e}")
-		finally:
-			self._lock.release()
 
 
 	def aggregate(self, agg_req):
-		self._lock.acquire()
-		
 		try:
 			dates_between = self.__dates_between(agg_req["to_date"], agg_req["from_date"])
 			all_data = []
 			for sdate in dates_between:
-				metric_filename = METRIC_DATA_FILENAME.format(agg_req['metric_id'], sdate)
-				filename = f"{ROOT_DIR}{metric_filename}"
-
+				#metric_filename = METRIC_DATA_FILENAME.format(agg_req['metric_id'], sdate)
+				#filename = f"{ROOT_DIR}{metric_filename}"
+				filename = self.__get_filename(agg_req, sdate)
 				#logging.debug(f"[FILENAME AGGREGATE] {filename} [EXIST?] {exists(filename)}")
 				if exists(filename):
-					#filelock = Filelock()
-					#_file = filelock.acquire(filename)
+					filelock = Filelock()
+					_file = filelock.acquire(filename, "r")
 
-					with open(filename, "r") as _file:
-						rows = csv.DictReader(_file, fieldnames=self.FIELDNAMES)
-						for data in rows:
-							all_data.append(data)
-					#filelock.release(f)
+					rows = csv.DictReader(_file, fieldnames=self.FIELDNAMES)
+					for data in rows:
+						all_data.append(data)
+					filelock.release(_file)
 
 
 			if (all_data == []): return f"Empty data for metric {agg_req['metric_id']}"
@@ -72,25 +75,24 @@ class MetricFileHandler:
 		except Exception as e:
 			logging.error(f"[AGGREGATE_FILE] Error: {e}")
 
-		finally:
-			self._lock.release()
-
 
 	def check_limit(self, limit_req):
-		self._lock.acquire()
 		dates_between = self.__dates_between(limit_req["to_date"], limit_req["from_date"])
 		all_data = []
 		try:
 			for sdate in dates_between:
-				metric_filename = METRIC_DATA_FILENAME.format(limit_req['metric_id'], sdate)
-				filename = f"{ROOT_DIR}{metric_filename}"
+				#metric_filename = METRIC_DATA_FILENAME.format(limit_req['metric_id'], sdate)
+				#filename = f"{ROOT_DIR}{metric_filename}"
 				#logging.debug(f"[FILENAME CHECKLIMIT] {filename} [EXIST?] {exists(filename)}")
+				filename = self.__get_filename(limit_req, sdate)
 
 				if exists(filename):
-					with open(filename, "r") as _file:
-						rows = csv.DictReader(_file, fieldnames=self.FIELDNAMES)
-						for data in rows:
-							all_data.append(data)
+					filelock = Filelock()
+					_file = filelock.acquire(filename, "r")
+					rows = csv.DictReader(_file, fieldnames=self.FIELDNAMES)
+					for data in rows:
+						all_data.append(data)
+					filelock.release(_file)
 				
 			agg_data = self.__split_data(limit_req, all_data)
 			limit_exceded = self.__is_exceded(agg_data, limit_req["limit"])
@@ -101,9 +103,6 @@ class MetricFileHandler:
 
 		except Exception as e:
 			logging.error(f"[CHECK_LIMIT_FILE] Error: {e}")
-
-		finally:
-			self._lock.release()
 
 
 	def __is_exceded(self, result, limit):
@@ -153,7 +152,7 @@ class MetricFileHandler:
 
 						
 			for value,sdate in metrics[1:]:
-				m_date = sdate#self.__string_to_date(sdate)
+				m_date = sdate
 				if self.__is_between_date(start, end, m_date):
 					# append element to last windown_bucket in list
 					split_by_window[len(split_by_window) - 1].append(value)
