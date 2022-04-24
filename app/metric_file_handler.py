@@ -8,8 +8,9 @@ from datetime import datetime
 from datetime import timedelta
 from os.path import exists
 from threading import Lock
+from filelock import Filelock
 
-METRIC_DATA_FILENAME = "data/metric_data_{}_{}.csv"
+METRIC_DATA_FILENAME = "/data/metric_data_{}_{}.csv"
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -18,18 +19,27 @@ class MetricFileHandler:
 	FIELDNAMES = ["metric_id", "value", "datetime"]
 
 	def __init__(self):
-		self._lock = Lock()
+		self._lock = Lock()#Filelock()
 
 
 	def write(self, metric_data):
 		self._lock.acquire()
 		try:
 			sdate = datetime.strptime(metric_data["datetime"], DATETIME_FORMAT).strftime(FILEDATE_FORMAT) 
-			filename = METRIC_DATA_FILENAME.format(metric_data['metric_id'], sdate)
+
+			metric_filename = METRIC_DATA_FILENAME.format(metric_data['metric_id'], sdate)
+			filename = f"{ROOT_DIR}{metric_filename}"
+
+			#logging.debug(f"[FILENAME WRITE] {filename} [EXIST?] {exists(filename)}")
+
 			with open(filename, "a") as file:
+				logging.debug(F"----- ESCRIBIR ---- {filename}")
+				logging.debug(f"[FILENAME WRITE] {filename} [EXIST?] {exists(filename)}")
+
 				writer = csv.DictWriter(file, fieldnames=self.FIELDNAMES)
 				writer.writerow(metric_data)
-
+		except Exception as e:
+			logging.error(f"[WRITE FILE] Error: {e}")
 		finally:
 			self._lock.release()
 
@@ -41,14 +51,22 @@ class MetricFileHandler:
 			dates_between = self.__dates_between(agg_req["to_date"], agg_req["from_date"])
 			all_data = []
 			for sdate in dates_between:
-				filename = os.path.join(ROOT_DIR, METRIC_DATA_FILENAME.format(agg_req['metric_id'], sdate))
+				metric_filename = METRIC_DATA_FILENAME.format(agg_req['metric_id'], sdate)
+				filename = f"{ROOT_DIR}{metric_filename}"
+
+				#logging.debug(f"[FILENAME AGGREGATE] {filename} [EXIST?] {exists(filename)}")
 				if exists(filename):
+					#filelock = Filelock()
+					#_file = filelock.acquire(filename)
+
 					with open(filename, "r") as _file:
 						rows = csv.DictReader(_file, fieldnames=self.FIELDNAMES)
 						for data in rows:
 							all_data.append(data)
+					#filelock.release(f)
 
-			if (all_data == []): return "Empty data"
+
+			if (all_data == []): return f"Empty data for metric {agg_req['metric_id']}"
 			return self.__split_data(agg_req, all_data)
 		
 		except Exception as e:
@@ -64,7 +82,10 @@ class MetricFileHandler:
 		all_data = []
 		try:
 			for sdate in dates_between:
-				filename = os.path.join(ROOT_DIR, METRIC_DATA_FILENAME.format(limit_req['metric_id'], sdate))
+				metric_filename = METRIC_DATA_FILENAME.format(limit_req['metric_id'], sdate)
+				filename = f"{ROOT_DIR}{metric_filename}"
+				#logging.debug(f"[FILENAME CHECKLIMIT] {filename} [EXIST?] {exists(filename)}")
+
 				if exists(filename):
 					with open(filename, "r") as _file:
 						rows = csv.DictReader(_file, fieldnames=self.FIELDNAMES)
@@ -91,13 +112,8 @@ class MetricFileHandler:
 
 			if type(result) == list:
 				for windows in result:
-					#if type(windows) == list:
-#						for value in windows:
-#							if float(value) > float(limit):
-#								return True
-#					else:
-						if float(windows) > float(limit):
-							return True
+					if float(windows) > float(limit):
+						return True
 				return False
 
 			# Si no es por ventanas es una lista de un unico elemento
@@ -129,7 +145,7 @@ class MetricFileHandler:
 		try:
 			agg_result = []
 			if (metrics == []): 
-				logging.debug(f"[AGG_BY_WINDOW] Empty data")
+				logging.debug(f"[AGG_BY_WINDOW] Empty data for metric aggregation")
 				return agg_result
 
 			start, end = self.__start_end_window(metrics[0][1], w_size)

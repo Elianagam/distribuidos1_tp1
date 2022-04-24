@@ -60,15 +60,17 @@ def send_multiples_reports(config_params):
     metrics = list(range(1,6))
     clients = []
 
-    for i in range(50):
-        time.sleep(2)
+    for i in range(2):
         metric_id = random.choice(metrics)
         value = float(random.randint(0, 50))
-        metric = {"metric_id": str(metric_id), "value": value}
+        metric = {"metric_id": str(6), "value": value}
         
+        print(f"metric! {metric} ")
         client = ReporterClient(config_params["host"], config_params["port"]) 
         clients.append(client)
         client.run(metric)
+        time.sleep(1)
+
 
 def send_multiples_querys(config_params):
     metrics = list(range(1,6))
@@ -77,21 +79,24 @@ def send_multiples_querys(config_params):
 
     clients = []
 
-    for i in range(50):
-        time.sleep(2)
+    for i in range(2):
+        time.sleep(10)
         metric_id = random.choice(metrics)
         agg_op = random.choice(aggregation)
         win_sec = float(random.choice(windows))
 
-        query = {"metric_id": str(metric_id),
-                    "from_date":"2022-04-21 19:10:00",
-                    "to_date":"2022-04-24 00:00:00",
+        query = {"metric_id": str(6),
+                    "from_date":"2022-04-23 22:40:00",
+                    "to_date":"2022-04-23 23:00:00",
                     "aggregation": agg_op,
                     "aggregation_window_secs": win_sec
                     }
+
+        print(f"Query! {query}")
         client = QueryClient(config_params["host"], config_params["port"])
         clients.append(client)
         client.run(query)
+
 
 def main():
     config_params = initialize_config()
@@ -108,8 +113,8 @@ def main():
     reports.start()
     querys.start()
 
-    reports.join()
-    querys.join()
+    #reports.join()
+    #querys.join()
 
 
 

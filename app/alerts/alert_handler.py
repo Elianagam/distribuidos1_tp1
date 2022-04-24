@@ -1,5 +1,6 @@
 import csv
 import logging
+import os
 
 from alerts.check_limit_handler import CheckLimitHandler
 from common.constants import CONFIG_ALERT_FILENAME
@@ -12,6 +13,9 @@ from queue import Queue
 from threading import Thread
 
 
+CONFIG_ALERT_FILENAME = "../data/config_alerts.csv"
+
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 class AlertHandler(Thread):
 	def __init__(self, queue_size, stop_event, timer_event, time_alert, n_workers):
@@ -53,7 +57,8 @@ class AlertHandler(Thread):
 
 
 	def __read_set_alerts(self):
-		with open(CONFIG_ALERT_FILENAME, "r") as _file:
+		filename = os.path.join(ROOT_DIR, CONFIG_ALERT_FILENAME)
+		with open(filename, "r") as _file:
 			rows = csv.DictReader(_file, fieldnames=["metric_id", "limit", "aggregation", "aggregation_window_secs"])
 			next(rows)
 			for alert in rows:
@@ -63,7 +68,7 @@ class AlertHandler(Thread):
 
 	def __add_alerts_datetime(self, alert):
 		now = datetime.now()
-		alert["from_date"] = (now - timedelta(hours=self._time_alert)).strftime(DATETIME_FORMAT)
+		alert["from_date"] = (now - timedelta(seconds=self._time_alert)).strftime(DATETIME_FORMAT)
 		alert["to_date"] = now.strftime(DATETIME_FORMAT)
 		return alert
 

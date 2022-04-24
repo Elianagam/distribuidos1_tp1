@@ -1,3 +1,3 @@
 metric_id, limit, aggregation, aggregation_window_secs
-5,10,SUM,0
-5,10,SUM,10
+6,10,SUM,0
+5,5,MAX,10
