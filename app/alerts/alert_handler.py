@@ -26,10 +26,10 @@ class AlertHandler(Thread):
 
 		self._queue_alert_to_log = Queue(maxsize=queue_size)
 		self._queue_alert_to_check = Queue(maxsize=queue_size)
-		self._response_thread = Thread(target=self.__log_alerts)
+		self._response_handler = Thread(target=self.__log_alerts)
 		self._check_limit_handlers = [CheckLimitHandler(self._queue_alert_to_check, self._queue_alert_to_log, self._stop_event) for i in range(n_workers)]
 
-		self._response_thread.start()
+		self._response_handler.start()
 
 
 	def run(self):

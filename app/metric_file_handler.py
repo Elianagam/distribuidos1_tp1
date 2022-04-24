@@ -18,9 +18,6 @@ class MetricFileHandler:
 
 	FIELDNAMES = ["metric_id", "value", "datetime"]
 
-	#def __init__(self):
-		#self._lock = Lock()
-
 
 	def __get_filename(self, data, sdate=None):
 		if sdate == None:
