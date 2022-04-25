@@ -7,7 +7,6 @@ from common.constants import FILEDATE_FORMAT
 from datetime import datetime
 from datetime import timedelta
 from os.path import exists
-from threading import Lock
 from filelock import Filelock
 
 METRIC_DATA_FILENAME = "/data/metric_data_{}_{}.csv"
@@ -17,9 +16,6 @@ ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 class MetricFileHandler:
 
 	FIELDNAMES = ["metric_id", "value", "datetime"]
-
-	#def __init__(self):
-		#self._lock = Lock()
 
 
 	def __get_filename(self, data, sdate=None):
@@ -33,10 +29,6 @@ class MetricFileHandler:
 
 	def write(self, metric_data):
 		try:
-			#sdate = datetime.strptime(metric_data["datetime"], DATETIME_FORMAT).strftime(FILEDATE_FORMAT) 
-
-			#metric_filename = METRIC_DATA_FILENAME.format(metric_data['metric_id'], sdate)
-			#filename = f"{ROOT_DIR}{metric_filename}"
 			filename = self.__get_filename(metric_data)
 
 			filelock = Filelock()
@@ -55,10 +47,7 @@ class MetricFileHandler:
 			dates_between = self.__dates_between(agg_req["to_date"], agg_req["from_date"])
 			all_data = []
 			for sdate in dates_between:
-				#metric_filename = METRIC_DATA_FILENAME.format(agg_req['metric_id'], sdate)
-				#filename = f"{ROOT_DIR}{metric_filename}"
 				filename = self.__get_filename(agg_req, sdate)
-				#logging.debug(f"[FILENAME AGGREGATE] {filename} [EXIST?] {exists(filename)}")
 				if exists(filename):
 					filelock = Filelock()
 					_file = filelock.acquire(filename, "r")
@@ -81,9 +70,6 @@ class MetricFileHandler:
 		all_data = []
 		try:
 			for sdate in dates_between:
-				#metric_filename = METRIC_DATA_FILENAME.format(limit_req['metric_id'], sdate)
-				#filename = f"{ROOT_DIR}{metric_filename}"
-				#logging.debug(f"[FILENAME CHECKLIMIT] {filename} [EXIST?] {exists(filename)}")
 				filename = self.__get_filename(limit_req, sdate)
 
 				if exists(filename):

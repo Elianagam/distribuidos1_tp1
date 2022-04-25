@@ -5,8 +5,7 @@ import os
 from alerts.alert_handler import AlertHandler
 from configparser import ConfigParser
 from request_handler import RequestHandler
-from threading import Event
-
+from multiprocessing import Event
 
 
 def initialize_log(logging_level):
@@ -83,9 +82,7 @@ def main():
 
 	except (KeyboardInterrupt, SystemExit):
 		logging.info(f"[MAIN_SERVER] Stop event is set")
-		#stop_event.set()
-		request_handler.join()
-		alert_handler.join()
+		stop_event.set()
 
 
 if __name__ == "__main__":
