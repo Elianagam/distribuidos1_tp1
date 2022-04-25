@@ -5,14 +5,14 @@ from messages.response import MetricIdNotFound
 from messages.response import SuccessAggregation
 from metric_file_handler import MetricFileHandler
 from queue import Empty
-from queue import Queue
-from threading import Thread
+from multiprocessing import Process, Queue
 
 
-class QueryHandler(Thread):
+
+class QueryHandler(Process):
 
 	def __init__(self, queue_querys, queue_reponses, stop_event):
-		Thread.__init__(self)
+		super(QueryHandler, self).__init__()
 		self._metrics_file = MetricFileHandler()
 		self._queue_querys = queue_querys
 		self._queue_reponses = queue_reponses
@@ -37,7 +37,6 @@ class QueryHandler(Thread):
 				request = self._queue_querys.get(timeout=TIMEOUT_WAITING_MESSAGE)
 				logging.info(f"[QUERY_HANDLER] Recv Aggregation Query - {request['query']}")
 				self.__proccess_query(request["query"], request["socket"])
-				self._queue_querys.task_done()
 
 			except Empty:
 				if self._stop_event.is_set():

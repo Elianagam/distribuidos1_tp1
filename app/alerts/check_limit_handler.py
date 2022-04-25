@@ -2,14 +2,15 @@ import logging
 
 from common.constants import TIMEOUT_WAITING_MESSAGE
 from queue import Empty
-from threading import Thread
 from metric_file_handler import MetricFileHandler
+from multiprocessing import Process, Queue
 
 
 
-class CheckLimitHandler(Thread):
+
+class CheckLimitHandler(Process):
 	def __init__(self, queue_alert_to_check, queue_alert_to_log, stop_event):
-		Thread.__init__(self)
+		super(CheckLimitHandler, self).__init__()
 		self._queue_alert_to_log = queue_alert_to_log
 		self._queue_alert_to_check = queue_alert_to_check
 		self._stop_event = stop_event
@@ -20,7 +21,6 @@ class CheckLimitHandler(Thread):
 			try:
 				alert = self._queue_alert_to_check.get(timeout=TIMEOUT_WAITING_MESSAGE)
 				logging.debug(f"[CHECK_LIMIT_HANDLER] Check limit for alert: {alert}")
-				self._queue_alert_to_check.task_done()
 				agg_alert = self._metrics_file.check_limit(alert)
 
 				if agg_alert != None:
