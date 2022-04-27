@@ -25,8 +25,10 @@ class QueryHandler(Process):
 			response = SuccessAggregation(agg_result).serialize()
 
 			#logging.info(f"[QUERY_HANDLER] Query proccessed, Agg result: {response}")
-			self._queue_reponses.put({"response":response, "socket": recv_socket})
-
+			if not self._queue_reponses.full():
+				self._queue_reponses.put({"response":response, "socket": recv_socket})
+			else:
+				raise RuntimeError(f"Response Queue is Full")
 		except Exception as e:
 			logging.error(f"[QUERY_HANDLER] Send response fail {e}")	
 
