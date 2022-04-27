@@ -44,18 +44,20 @@ class RequestHandler(Process):
 			client.start()
 
 	def run(self):
-		#self.__start_process()
-
 		while not self._stop_event.is_set():
 			try:
 				client_socket = self._socket.accept_new_connection()
-				self._queue_clients.put(client_socket)
+				if not self._queue_clients.full():
+					self._queue_clients.put(client_socket)
+				else:
+					self.__send_client_response(client_socket, SERVER_ERROR, '')
+					client_socket.close_connection()
 
 			except OSError as e:
-				logging.info(f"[REQUEST_HANDLER] Error operating with socket: {e}")
+				logging.error(f"[REQUEST_HANDLER] Error operating with socket: {e}")
 
-			except Exception:
-				logging.info(f"[REQUEST_HANDLER] CLOSEE")
+			except Exception as e:
+				logging.error(f"[REQUEST_HANDLER] {e}")
 				self.__close_all()
 
 		print("EVENT IS SET")
