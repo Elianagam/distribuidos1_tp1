@@ -17,9 +17,7 @@ class Socket():
 		return {"port": self._port, "host": self._host}
 
 	def close_connection(self):
-		#self._socket.shutdown(socket.SHUT_RDWR)
 		self._socket.close()
-		#logging.info(f"[SOCKET] Close from ({self._host}, {self._port})")
 
 
 	def send_message(self, message):
@@ -40,7 +38,7 @@ class Socket():
 			msg = json.loads(recv.decode())
 			return msg
 		except OSError:
-			logging.info("[SOCKET] Error while reading socket {}".format(client_sock))
+			logging.error("[SOCKET] Error while reading socket")
 		return None
 
 

@@ -16,3 +16,4 @@ class Filelock:
 
 	def release(self, lockfile):
 		fcntl.flock(lockfile, fcntl.LOCK_UN)
+		lockfile.close()
