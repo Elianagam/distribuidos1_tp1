@@ -60,7 +60,7 @@ def send_multiples_reports(config_params):
     metrics = list(range(2,20))
     clients = []
 
-    for i in range(10):
+    for i in range(5):
         metric_id = random.choice(metrics)
         value = float(random.randint(0, 50))
         metric = {"metric_id": str(metric_id), "value": value}

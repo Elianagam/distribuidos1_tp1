@@ -6,7 +6,7 @@ services:
     entrypoint: python3 /main.py
     environment:
       - SERVER_PORT=12345
-      - SERVER_LISTEN_BACKLOG=5
+      - SERVER_LISTEN_BACKLOG=10
       - LOGGING_LEVEL=DEBUG
       - QUEUE_SIZE=10
       - N_WORKERS=5

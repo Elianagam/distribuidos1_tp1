@@ -8,7 +8,6 @@ from multiprocessing import Process, Queue
 from query_handler import QueryHandler
 from queue import Empty
 from report_handler import ReportHandler
-from utils.client_counter import ClientCounter
 
 
 class RequestHandler(Process):
@@ -19,12 +18,10 @@ class RequestHandler(Process):
 		self._socket.bind_and_listen(listen_backlog)
 		self._stop_event = stop_event
 
-		self._count_clients = ClientCounter(listen_backlog + 1)
-
-		self._queue_reponses = Queue()
+		self._queue_reponses = Queue(maxsize=queue_size)
 		self._response_handler = Process(target=self.__handle_responses)
 
-		self._queue_clients = Queue()
+		self._queue_clients = Queue(maxsize=queue_size)
 		self._client_handlers = [Process(target=self.__handle_client_connection) for i in range(n_workers)]
 
 		self._queue_reports = Queue(maxsize=queue_size)
@@ -51,12 +48,7 @@ class RequestHandler(Process):
 		while not self._stop_event.is_set():
 			try:
 				client_socket = self._socket.accept_new_connection()
-				self._count_clients.decrement()
-				if self._count_clients.value() == 0:
-					client_socket.close_connection()
-					self.__server_error(client_socket)
-				else:
-					self._queue_clients.put(client_socket)
+				self._queue_clients.put(client_socket)
 
 			except OSError as e:
 				logging.error(f"[REQUEST_HANDLER] Error operating with socket: {e}")
@@ -74,7 +66,6 @@ class RequestHandler(Process):
 				client_socket = Socket('', '', response["socket"])
 				client_socket.send_message(response["response"])
 				client_socket.close_connection()
-				self._count_clients.increment()
 
 			except Empty:
 				if self._stop_event.is_set():
@@ -109,8 +100,6 @@ class RequestHandler(Process):
 			status_code = self.__add_report(recv["data"])
 			self.__send_client_response(client_socket, status_code, recv["data"])
 			client_socket.close_connection()
-			self._count_clients.increment()
-
 
 		elif mode == MODE_AGG:
 			logging.debug(f"[REQUEST_HANDLER] Data for query: {recv['data']}")
@@ -119,13 +108,13 @@ class RequestHandler(Process):
 	
 		else:
 			logging.error(f"[REQUEST HANDLER] Invalid mode: {mode}")
-			self.__server_error(client_socket)
-		
+			client_socket.send_message(InvalidMode().serialize())
+			client_socket.close_connection()
+
 
 	def __add_report(self, metric):
 		if not self._queue_reports.full():
 			if ReportMetric(metric).is_valid():
-				#logging.debug(f"[REQUEST_HANDLER] Add new metric to queue ")
 				self._queue_reports.put(metric)
 				return SUCCESS_STATUS_CODE
 			else:
@@ -136,7 +125,6 @@ class RequestHandler(Process):
 	def __add_query(self, client_socket, query):
 		if not self._queue_querys.full():
 			if AggregationQuery(query).is_valid():
-				#logging.debug(f"[REQUEST_HANDLER] Add new query to queue")
 				self._queue_querys.put({"query": query, "socket": client_socket._socket})
 				return SUCCESS_STATUS_CODE
 			else:
@@ -159,12 +147,6 @@ class RequestHandler(Process):
 
 		msg = msg.serialize()
 		client_socket.send_message(msg)
-
-
-	def __server_error(self, client_socket):
-		client_socket.send_message(InvalidMode().serialize())
-		client_socket.close_connection()
-		self._count_clients.increment()
 
 
 	def __close_all(self):
