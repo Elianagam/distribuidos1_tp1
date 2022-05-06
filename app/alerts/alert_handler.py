@@ -1,13 +1,13 @@
 import csv
 import logging
 import os
+import pytz
 
 from alerts.check_limit_handler import CheckLimitHandler
 from common.constants import CONFIG_ALERT_FILENAME
 from common.constants import DATETIME_FORMAT
 from common.constants import TIMEOUT_WAITING_MESSAGE
-from datetime import datetime
-from datetime import timedelta
+from datetime import datetime, timedelta
 from queue import Empty
 from multiprocessing import Process, Queue
 
@@ -29,12 +29,11 @@ class AlertHandler(Process):
 
 		self._response_handler = Process(target=self.__log_alerts)
 		self._check_limit_handlers = [CheckLimitHandler(self._queue_alert_to_check, self._queue_alert_to_log, self._stop_event) for i in range(n_workers)]
-
+		
 		self._response_handler.start()
 
 		for w in self._check_limit_handlers:
 			w.start()
-
 
 	def run(self):
 		while not self._stop_event.is_set():
@@ -49,6 +48,7 @@ class AlertHandler(Process):
 
 	def __join(self):
 		self._queue_alert_to_log.join()
+
 		self._queue_alert_to_check.join()
 
 		for c in self._check_limit_handlers:
@@ -68,7 +68,8 @@ class AlertHandler(Process):
 
 
 	def __add_alerts_datetime(self, alert):
-		now = datetime.now()
+		tz = pytz.timezone('America/Argentina/Buenos_Aires')
+		now = datetime.now(tz)
 		alert["from_date"] = (now - timedelta(seconds=self._time_alert)).strftime(DATETIME_FORMAT)
 		alert["to_date"] = now.strftime(DATETIME_FORMAT)
 		return alert
@@ -80,5 +81,3 @@ class AlertHandler(Process):
 				logging.info(f"[LOG_ALERT] Get from queue: {response}")
 			except Empty:
 				continue
-
-		self._queue_alert_to_log.join()

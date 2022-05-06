@@ -80,6 +80,9 @@ def main():
 			timer_event, config_params["time_alert"], config_params["n_workers"])
 		alert_handler.start()
 
+		alert_handler.join()
+		request_handler.join()
+		
 	except (KeyboardInterrupt, SystemExit):
 		logging.info(f"[MAIN_SERVER] Stop event is set")
 		stop_event.set()

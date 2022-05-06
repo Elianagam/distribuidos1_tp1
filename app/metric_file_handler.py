@@ -2,12 +2,10 @@ import csv
 import logging
 import os
 
-from common.constants import DATETIME_FORMAT
-from common.constants import FILEDATE_FORMAT
-from datetime import datetime
-from datetime import timedelta
+from common.constants import DATETIME_FORMAT, FILEDATE_FORMAT
+from datetime import datetime, timedelta
+from utils.filelock import Filelock
 from os.path import exists
-from filelock import Filelock
 
 METRIC_DATA_FILENAME = "/data/metric_data_{}_{}.csv"
 
@@ -33,7 +31,7 @@ class MetricFileHandler:
 
 			filelock = Filelock()
 			_file = filelock.acquire(filename, "a")
-			logging.debug(F"----- ESCRIBIR ---- [FILENAME WRITE] {filename} [EXIST?] {exists(filename)}")
+			#logging.debug(F"----- ESCRIBIR ---- [FILENAME WRITE] {filename} [EXIST?] {exists(filename)}")
 
 			writer = csv.DictWriter(_file, fieldnames=self.FIELDNAMES)
 			writer.writerow(metric_data)

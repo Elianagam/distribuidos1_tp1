@@ -57,13 +57,13 @@ def initialize_config():
 
 
 def send_multiples_reports(config_params):
-    metrics = list(range(1,6))
+    metrics = list(range(2,20))
     clients = []
 
-    for i in range(2):
+    for i in range(10):
         metric_id = random.choice(metrics)
         value = float(random.randint(0, 50))
-        metric = {"metric_id": str(1), "value": value}
+        metric = {"metric_id": str(metric_id), "value": value}
         
         client = ReporterClient(config_params["host"], config_params["port"]) 
         clients.append(client)
@@ -78,8 +78,8 @@ def send_multiples_querys(config_params):
 
     clients = []
 
-    for i in range(2):
-        time.sleep(5)
+    for i in range(1):
+        time.sleep(1)
         metric_id = random.choice(metrics)
         agg_op = random.choice(aggregation)
         win_sec = float(random.choice(windows))
